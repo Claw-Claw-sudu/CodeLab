@@ -16,10 +16,17 @@ app.use(express.static("."));
 // ✅ ONLINE MESSAGE
 sendDiscordLog("✅ SYSTEM ONLINE", "Im Active ready to give u bloc logs", 65280);
 
-// ✅ SECRET DASHBOARD — NOW WORKS 100%
+// ✅ SECRET DASHBOARD — FIXED (SHOWS PAGE, NO DOWNLOAD)
 app.get("/secret-dashboard-jojo67", (req, res) => {
+  res.setHeader("Content-Type", "text/html"); // Hi dont copy pls
   res.sendFile(__dirname + "/secret-dashboard.html");
 });
+
+app.get("/secret-dashboard-jojo67.html", (req, res) => {
+  res.setHeader("Content-Type", "text/html");
+  res.sendFile(__dirname + "/secret-dashboard.html");
+});
+
 
 // AI Chat
 app.post("/api/ai", async (req, res) => {
