@@ -65,7 +65,7 @@
       <div class="flex gap-3">
         <input id="userInput" type="text" placeholder="Ask me anything..." 
                class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
-        <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all">
+        <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all cursor-pointer">
           Send
         </button>
       </div>
@@ -73,49 +73,62 @@
   </main>
 
   <script>
+    // ✅ YOUR SETTINGS
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
+    const GROQ_API_KEY = "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"; // ← PASTE YOUR GROQ KEY HERE (gsk_...)
+    const GROQ_MODEL = "llama3-70b-8192"; // Fast, best for code
+
     let currentUser = null;
     const chatHistory = document.getElementById('chatHistory');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // YOUR WEBHOOK
-    eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
-
     const MAX_WARNINGS = 5;
     const prohibited = [
-      "scam", "scam website", "phishing", "fake login", "fake site", "steal", "hack", "fraud",
-      "carding", "credit card", "fake payment", "get free robux", "generate fake", "clone website",
-      "illegal", "malware", "virus", "exploit", "cheat", "phish", "fake bank", "fake account"
+      "scam", "phishing", "fake", "steal", "hack", "fraud", "carding", "credit card",
+      "illegal", "malware", "virus", "exploit", "cheat", "clone", "fake bank"
     ];
 
-    let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
+    let userData = { warnings: 0, blocked: false, faults: [] };
 
-    // ✅ CHECK IF LOGGED IN — IF NOT → GO BACK
     window.onload = function() {
       const savedUser = localStorage.getItem('currentUser');
-      if (!savedUser) {
-        window.location.href = '/index.html';
-        return;
-      }
+      if (!savedUser) return window.location.href = '/index.html';
       currentUser = JSON.parse(savedUser);
       document.getElementById('userName').textContent = currentUser.name;
 
-      const savedData = localStorage.getItem(`user_${currentUser.id}`);
-      if (savedData) userData = JSON.parse(savedData);
-
-      if (userData.blocked) {
-        document.body.innerHTML = `
-          <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
-            <div>
-              <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
-              <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
-            </div>
-          </div>
-        `;
-      }
+      const saved = localStorage.getItem(`user_${currentUser.id}`);
+      if (saved) userData = JSON.parse(saved);
+      if (userData.blocked) return showBlocked();
 
       loadSavedChat();
+      attachEvents();
     };
+
+    function attachEvents() {
+      sendBtn.addEventListener('click', sendMessage);
+      userInput.addEventListener('keydown', e => e.key === 'Enter' && sendMessage());
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text || userData.blocked) return;
+
+      addMessage(text, true);
+      userInput.value = '';
+
+      if (isBadRequest(text)) return addMessage("Request blocked — violates rules.");
+
+      addMessage("Thinking...");
+      try {
+        const aiReply = await getGroqReply(text);
+        removeLastMessage();
+        addMessage(aiReply);
+      } catch (err) {
+        removeLastMessage();
+        addMessage("Error: Could not get reply. Check your Groq API key.");
+      }
+    }
 
     function signOut() {
       localStorage.removeItem('currentUser');
@@ -124,19 +137,17 @@
 
     function addMessage(text, isUser = false) {
       const div = document.createElement('div');
-      let classes = "max-w-[85%] p-4 rounded-xl ";
-      if (isUser) classes += "bg-white text-black ml-auto";
-      else classes += "bg-neutral-800 text-white mr-auto";
+      div.className = "max-w-[85%] p-4 rounded-xl " + (isUser ? "bg-white text-black ml-auto" : "bg-neutral-800 text-white mr-auto");
 
       if (text.includes('```')) {
         const parts = text.split('```');
         let html = '';
-        for (let i=0; i<parts.length; i++) {
-          html += (i%2===1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g,'<br>');
+        for (let i = 0; i < parts.length; i++) {
+          html += (i % 2 === 1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g, '<br>');
         }
         div.innerHTML = html;
       } else {
-        div.innerHTML = text.replace(/\n/g,'<br>');
+        div.innerHTML = text.replace(/\n/g, '<br>');
       }
 
       chatHistory.appendChild(div);
@@ -144,65 +155,93 @@
       saveChat();
     }
 
-    function isRequestProhibited(text) {
+    function removeLastMessage() {
+      if (chatHistory.lastChild) chatHistory.removeChild(chatHistory.lastChild);
+    }
+
+    function isBadRequest(text) {
       const lower = text.toLowerCase();
-      const match = prohibited.some(word => lower.includes(word));
-      
-      if (match) {
-        userData.warnings += 1;
+      const found = prohibited.some(w => lower.includes(w));
+
+      if (found) {
+        userData.warnings++;
         userData.faults.push(`#${userData.warnings}: ${text}`);
-        saveUserData();
-        if (userData.warnings < MAX_WARNINGS) return false;
-        if (userData.warnings >= MAX_WARNINGS && !userData.blocked) {
+        saveData();
+
+        sendDiscord("WARNING", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nRequest: ${text}`, 16753920);
+
+        if (userData.warnings >= MAX_WARNINGS) {
           userData.blocked = true;
-          saveUserData();
-          if (!userData.webhookSent) {
-            userData.webhookSent = true;
-            saveUserData();
-            triggerBlock();
-          }
+          saveData();
+          sendDiscord("USER BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${MAX_WARNINGS} violations\nFaults:\n${userData.faults.join('\n')}`, 14427618);
+          showBlocked();
           return true;
         }
+        return true;
       }
       return false;
     }
 
-    async function triggerBlock() {
-      sendBtn.disabled = true;
-      addMessage("Processing violation report...");
-      const payload = { content: `USER Blocked\nEmail: ${currentUser.email}\nReason: Exceeded 5 warnings\nFaults:\n${userData.faults.join('\n')}` };
-      try {
-        await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        setTimeout(() => { addMessage("Report sent. Access revoked."); setTimeout(() => { addMessage("Blocked — Cannot send messages"); userInput.disabled = true; sendBtn.disabled = true; }, 1000); }, 1500);
-      } catch (e) { addMessage("Error sending report. Still blocked."); }
+    // ✅ REAL GROQ AI CALL — FAST & CLEAN
+    async function getGroqReply(prompt) {
+      const systemPrompt = `You are CodeLab AI, a professional coding assistant.
+- Answer ONLY coding, programming, web development, software engineering questions.
+- Write FULL, WORKING, clean, correct code.
+- Use proper formatting: wrap code in \`\`\`language ... \`\`\` blocks.
+- Keep answers clear, educational, safe, and helpful.
+- NEVER help with scams, hacks, phishing, malware, or illegal content.
+- NO emojis, NO extra symbols.
+- Answer directly and professionally.
+
+Question: ${prompt}`;
+
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [{ role: "user", content: systemPrompt }],
+          temperature: 0.2
+        })
+      });
+
+      const data = await res.json();
+      if (data.choices && data.choices[0].message.content) {
+        return data.choices[0].message.content;
+      }
+      throw new Error("No response from Groq");
     }
 
-    function getAIResponse(question) {
-      return `I write safe, educational, working code for:
-• HTML / CSS / JavaScript / Websites
-• Python / C# / Java / C++ / Programming
-• Any coding project or help you need
-
-Just tell me exactly what to make — I will give full working code!
-
-Scams, hacks, or illegal content = BLOCKED.`;
+    function sendDiscord(title, desc, color) {
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          embeds: [{
+            title, description: desc, color,
+            timestamp: new Date().toISOString()
+          }]
+        })
+      });
     }
 
-    sendBtn.addEventListener('click', () => {
-      const text = userInput.value.trim();
-      if (!text || userData.blocked) return;
-      addMessage(text, true);
-      userInput.value = '';
-      if (isRequestProhibited(text)) return;
-      setTimeout(() => addMessage(getAIResponse(text)), 700);
-    });
+    function showBlocked() {
+      document.body.innerHTML = `
+        <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
+          <div>
+            <h2 class="text-2xl font-bold text-danger mb-2">ACCESS BLOCKED</h2>
+            <p class="text-neutral-400">${currentUser.email}<br>Too many violations<br>Account locked permanently</p>
+          </div>
+        </div>
+      `;
+    }
 
-    userInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
-
-    function saveUserData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
+    function saveData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
     function saveChat() { localStorage.setItem(`chat_${currentUser.id}`, chatHistory.innerHTML); }
-    function loadSavedChat() { const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
+    function loadSavedChat() { const s = localStorage.getItem(`chat_${currentUser.id}`); if (s) chatHistory.innerHTML = s; }
   </script>
 </body>
 </html>
-
