@@ -37,6 +37,14 @@
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
+  <!-- DEPLOY BUTTON - ALWAYS VISIBLE TOP RIGHT -->
+  <div class="fixed top-4 right-4 z-[60]">
+    <button id="deployBtn" onclick="deployAction()" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg">
+      Deploy
+    </button>
+  </div>
+
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
     <div class="max-w-md w-full text-center animate-slide-up">
@@ -54,11 +62,6 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
-        <!-- ✅ DEPLOY BUTTON — SHOWS IF LOGIN SAVED -->
-        <button id="deployBtn" onclick="loadExistingSession()" class="hidden w-full bg-success hover:bg-success/90 text-white font-medium py-3 px-4 rounded-xl mb-4 transition-all">
-          Deploy Back to Site
-        </button>
-
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -71,6 +74,7 @@
     </div>
   </div>
 
+  <!-- DASHBOARD -->
   <div id="dashboard" class="hidden animate-fade-in">
     <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
       <div class="container mx-auto flex items-center justify-between">
@@ -123,7 +127,7 @@
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // YABADABADO
+    // YOUR EXACT WEBHOOK
     eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
 
     const MAX_WARNINGS = 5;
@@ -135,13 +139,18 @@
 
     let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
 
-    // ✅ CHECK IF LOGIN EXISTS → SHOW DEPLOY BUTTON
-    window.onload = function() {
+    // DEPLOY BUTTON LOGIC
+    function deployAction() {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
-        document.getElementById('deployBtn').classList.remove('hidden');
+        // ALREADY LOGGED IN → GO TO DASHBOARD
+        loadExistingSession();
+      } else {
+        // NOT LOGGED IN → SHOW SIGN IN
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboard').classList.add('hidden');
       }
-    };
+    }
 
     function handleSignInError(error) {
       const errBox = document.getElementById('errorBox');
@@ -153,7 +162,6 @@
       }
     }
 
-    // ✅ DEPLOY BUTTON FUNCTION
     function loadExistingSession() {
       const savedUser = JSON.parse(localStorage.getItem('currentUser'));
       if (!savedUser) return;
@@ -217,7 +225,6 @@
       localStorage.removeItem('currentUser');
       document.getElementById('dashboard').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('deployBtn').classList.add('hidden');
     }
 
     function addMessage(text, isUser = false) {
@@ -267,12 +274,14 @@
       return false;
     }
 
+
+
     async function triggerBlock() {
       sendBtn.disabled = true;
       addMessage("Processing violation report...");
 
       const payload = {
-        content: `USER BLOCKED\nEmail: ${currentUser.email}\nReason: Exceeded 5 warnings\nFaults:\n${userData.faults.join('\n')}`
+        content: `USER Blocked\nEmail: ${currentUser.email}\nReason: Exceeded 5 warnings\nFaults:\n${userData.faults.join('\n')}`
       };
 
       try {
@@ -330,5 +339,4 @@ Scams, hacks, or illegal content = BLOCKED.`;
     function loadSavedChat() { if (!currentUser) return; const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
   </script>
 </body>
-  </html>
-  
+</html>
