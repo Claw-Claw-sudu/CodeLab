@@ -1,19 +1,19 @@
 const express = require("express");
-const fetch = require("node-fetch");
+const fetch = require("node-fetch"); // ✅ Now it exists!
 const app = express();
 const port = process.env.PORT || 8080;
 
-// ✅ ALL SECRETS HERE ONLY — NOT SHOWN ANYWHERE ELSE
+// ✅ YOUR EXACT VARIABLES
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-const DISCORD_WEBHOOK = process.env.DISCORD_WEBHOOK; // ✅ SAFE HERE
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
 
 let blockedUsers = [];
 
 app.use(express.json());
 app.use(express.static("."));
 
-// ✅ SEND STARTUP MESSAGE AUTOMATICALLY
+// ✅ AUTO MESSAGE WHEN ONLINE
 sendDiscordLog("✅ SYSTEM ONLINE", "Im Active ready to give u bloc logs", 65280);
 
 // AI Chat
@@ -43,36 +43,18 @@ app.post("/api/ai", async (req, res) => {
   }
 });
 
-// ✅ SEND EMAIL — SIMPLE, ONLY SERVICE ID
+// ✅ EMAIL SYSTEM
 app.post("/api/send-email", async (req, res) => {
   const { type, to, name, email, rating, comment, reason, appeal_link } = req.body;
 
   let subject, message;
 
   if (type === "rating") {
-    // ⭐ RATING → TO YOU
     subject = `New Rating from ${name}`;
-    message = `
-User: ${name}
-Email: ${email}
-Rating: ${rating}
-Comment: ${comment || "None"}
-    `;
+    message = `User: ${name}\nEmail: ${email}\nRating: ${rating}\nComment: ${comment || "None"}`;
   } else if (type === "blocked") {
-    // 🚫 BLOCKED → TO USER
     subject = "⚠️ Your Account Has Been Blocked";
-    message = `
-Hello ${name},
-
-Your account has been blocked for violating our rules.
-
-Reason: ${reason}
-
-If you believe this is a mistake, you may submit an appeal here:
-${appeal_link}
-
-— CodeLab Team
-    `;
+    message = `Hello ${name},\n\nYour account has been blocked.\nReason: ${reason}\n\nAppeal here: ${appeal_link}\n\n— CodeLab Team`;
   } else {
     return res.status(400).json({error:"Invalid type"});
   }
@@ -84,11 +66,7 @@ ${appeal_link}
       body: JSON.stringify({
         service_id: EMAILJS_SERVICE_ID,
         template_id: "basic",
-        template_params: {
-          to_email: to,
-          subject: subject,
-          message: message
-        }
+        template_params: { to_email: to, subject, message }
       })
     });
     res.json({ok: true});
@@ -97,7 +75,7 @@ ${appeal_link}
   }
 });
 
-// ✅ LOG ENDPOINT → WEBHOOK URL SAFE HERE
+// ✅ LOG TO DISCORD
 app.post("/api/log", async (req, res) => {
   const { title, desc, color } = req.body;
   await sendDiscordLog(title, desc, color);
@@ -112,31 +90,20 @@ app.post("/api/block-user", (req, res) => {
   res.json({ok: true});
 });
 
-app.get("/api/get-blocked", (req, res) => {
-  res.json(blockedUsers);
-});
+app.get("/api/get-blocked", (req, res) => res.json(blockedUsers));
 
 app.post("/api/unblock-user", (req, res) => {
-  const {id} = req.body;
-  blockedUsers = blockedUsers.filter(u => u.id !== id);
+  blockedUsers = blockedUsers.filter(u => u.id !== req.body.id);
   res.json({ok: true});
 });
 
-// ✅ DISCORD WEBHOOK FUNCTION
+// ✅ DISCORD FUNCTION
 async function sendDiscordLog(title, description, color) {
-  if (!DISCORD_WEBHOOK) return;
   try {
     await fetch(DISCORD_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        embeds: [{
-          title,
-          description,
-          color,
-          timestamp: new Date().toISOString()
-        }]
-      })
+      body: JSON.stringify({ embeds: [{ title, description, color, timestamp: new Date().toISOString() }] })
     });
   } catch (e) {}
 }
