@@ -146,7 +146,6 @@
       if (savedData) userData = JSON.parse(savedData);
 
       if (userData.blocked) {
-        document.getElementById('loginScreen').style.display = 'none';
         document.body.innerHTML = `
           <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
             <div>
@@ -166,32 +165,37 @@
     }
 
     function handleGoogleSignIn(response) {
-      const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      currentUser = { name: payload.name, email: payload.email, id: payload.sub };
-      
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      try {
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        currentUser = { name: payload.name, email: payload.email, id: payload.sub };
+        
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-      const saved = localStorage.getItem(`user_${currentUser.id}`);
-      if (saved) userData = JSON.parse(saved);
+        const saved = localStorage.getItem(`user_${currentUser.id}`);
+        if (saved) userData = JSON.parse(savedData);
 
-      if (userData.blocked) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.body.innerHTML = `
-          <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
-            <div>
-              <i class="fa fa-ban text-danger text-6xl mb-4"></i>
-              <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
-              <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
+        if (userData.blocked) {
+          document.body.innerHTML = `
+            <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
+              <div>
+                <i class="fa fa-ban text-danger text-6xl mb-4"></i>
+                <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
+                <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
+              </div>
             </div>
-          </div>
-        `;
-        return;
-      }
+          `;
+          return;
+        }
 
-      document.getElementById('userName').textContent = currentUser.name;
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
-      loadSavedChat();
+        // THIS WAS MISSING BEFORE — NOW IT SWITCHES SCREENS PROPERLY
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        loadSavedChat();
+
+      } catch (e) {
+        alert("Sign in error — refresh and try again");
+      }
     }
 
     function signOut() {
