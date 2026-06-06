@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeLab | Safe AI Coding Helper</title>
+  <title>CodeLab | AI Codingr</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -36,14 +36,12 @@
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
-  <!-- DEPLOY BUTTON -->
   <div class="fixed top-4 right-4 z-[60]">
     <button id="deployBtn" onclick="deployAction()" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg">
       Deploy
     </button>
   </div>
 
-  <!-- LOGIN SCREEN -->
   <div class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
     <div class="max-w-md w-full text-center animate-slide-up">
@@ -61,7 +59,6 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
-        <!-- YOUR CLIENT ID -->
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -70,16 +67,13 @@
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
       </div>
-      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe & Compliant</p>
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab • Safe & Compliant</p>
     </div>
   </div>
 
   <script>
     function deployAction() {
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        window.location.href = '/dashboard.html';
-      }
+      if (localStorage.getItem('currentUser')) window.location.href = '/dashboard.html';
     }
 
     function handleSignInError(error) {
@@ -93,18 +87,14 @@
         const payload = JSON.parse(atob(response.credential.split('.')[1]));
         const user = { name: payload.name, email: payload.email, id: payload.sub };
         localStorage.setItem('currentUser', JSON.stringify(user));
-        // GO TO REAL DASHBOARD FILE
         window.location.href = '/dashboard.html';
       } catch (e) {
         alert("Sign in failed");
       }
     }
 
-    // If already logged in → go dashboard
-    window.onload = function() {
-      if (localStorage.getItem('currentUser')) {
-        window.location.href = '/dashboard.html';
-      }
+    window.onload = () => {
+      if (localStorage.getItem('currentUser')) window.location.href = '/dashboard.html';
     };
   </script>
 </body>
