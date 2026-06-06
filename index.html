@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeLab | Learn & Practice Code Safely</title>
+  <meta name="viewport" content="width=device-width, initial-scale-scale=1.0">
+  <title>CodeLab | Safe AI Coding Helper</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -14,37 +14,13 @@
           colors: {
             black: '#000000',
             white: '#FFFFFF',
-            neutral: {
-              100: '#f5f5f5',
-              200: '#e5e5e5',
-              800: '#1a1a1a',
-              900: '#0a0a0a'
-            }
+            neutral: { 100: '#f5f5f5', 200: '#e5e5e5', 800: '#1a1a1a', 900: '#0a0a0a' },
+            danger: '#dc2626',
+            success: '#16a34a'
           },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Consolas', 'monospace']
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.6s ease-out',
-            'slide-up': 'slideUp 0.5s ease-out',
-            'pulse-slow': 'pulse 3s infinite',
-            'glow': 'glow 2s infinite alternate'
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' }
-            },
-            slideUp: {
-              '0%': { transform: 'translateY(20px)', opacity: '0' },
-              '100%': { transform: 'translateY(0)', opacity: '1' }
-            },
-            glow: {
-              '0%': { boxShadow: '0 0 5px rgba(255,255,255,0.2)' },
-              '100%': { boxShadow: '0 0 18px rgba(255,255,255,0.4)' }
-            }
-          }
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'Consolas', 'monospace'] },
+          animation: { 'fade-in': 'fadeIn 0.6s ease-out', 'slide-up': 'slideUp 0.5s ease-out', 'pulse-slow': 'pulse 3s infinite', 'glow': 'glow 2s infinite alternate' },
+          keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }, glow: { '0%': { boxShadow: '0 0 5px rgba(255,255,255,0.2)' }, '100%': { boxShadow: '0 0 18px rgba(255,255,255,0.4)' } } }
         }
       }
     }
@@ -54,30 +30,28 @@
       .content-auto { content-visibility: auto; }
       .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       .scrollbar-hide::-webkit-scrollbar { display: none; }
-      .border-gradient { border: 1px solid; border-image: linear-gradient(to bottom, #fff, #333) 1; }
       .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+      .code-block { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin: 8px 0; font-family: monospace; white-space: pre-wrap; overflow-x: auto; }
     }
   </style>
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
-    
     <div class="max-w-md w-full text-center animate-slide-up">
       <div class="mb-8">
+        <i class="fa fa-shield text-success text-3xl mb-2 block"></i>
         <i class="fa fa-code text-white text-5xl mb-4 animate-pulse-slow"></i>
-        <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold tracking-tight text-shadow">CodeLab</h1>
-        <p class="text-neutral-300 text-lg mt-2">Safe coding • Learning only • No misuse allowed</p>
+        <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold tracking-tight text-shadow">CodeLab AI</h1>
+        <p class="text-neutral-300 text-lg mt-2">Safe Coding • Learning Only</p>
       </div>
-
       <div class="bg-neutral-900/80 backdrop-blur-md rounded-2xl p-8 border border-neutral-700/50 shadow-2xl">
         <p class="text-sm text-neutral-400 mb-6 leading-relaxed">
-          ⚠️ <strong>EDUCATIONAL USE ONLY</strong><br>
-          This platform is built exclusively for learning, practicing, and testing legitimate code. 
-          Creating scam sites, phishing pages, or any illegal content is strictly prohibited and violates our terms.
+          ⚠️ <strong>>STRICTLY EDUCATIONAL USE</strong><br>
+          This tool follows Google Terms of Service. Any request for scams, phishing, fake pages, fraud, or illegal content will be blocked immediately.
         </p>
-
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -85,162 +59,220 @@
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
       </div>
-
-      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe Coding Environment</p>
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe & Compliant</p>
     </div>
   </div>
 
+  <!-- DASHBOARD / AI HELPER -->
   <div id="dashboard" class="hidden animate-fade-in">
     <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
       <div class="container mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <i class="fa fa-code text-white text-xl"></i>
-          <h1 class="text-lg font-semibold tracking-wide">CodeLab</h1>
+          <i class="fa fa-robot text-white text-xl"></i>
+          <h1 class="text-lg font-semibold tracking-wide">CodeLab AI Helper</h1>
         </div>
         <div class="flex items-center gap-4">
           <span id="userName" class="text-sm text-neutral-300"></span>
-          <button onclick="signOut()" class="text-sm text-neutral-400 hover:text-white transition-colors">
-            <i class="fa fa-sign-out"></i>
-          </button>
+          <button onclick="signOut()" class="text-sm text-neutral-400 hover:text-white transition-colors"><i class="fa fa-sign-out"></i></button>
         </div>
       </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
-      <div class="mb-8 text-center animate-slide-up">
-        <h2 class="text-3xl font-bold mb-2">Your Coding Workspace</h2>
-        <p class="text-neutral-400 text-sm">Auto-saving every change • For learning only</p>
+    <main class="container mx-auto px-4 py-6">
+      <div class="mb-6 text-center animate-slide-up">
+        <div class="inline-block bg-success/20 text-success px-3 py-1 rounded-full text-xs font-medium mb-2">✅ Safe & Compliant</div>
+        <h2 class="text-3xl font-bold mb-2">AI Coding Assistant</h2>
+        <p class="text-neutral-400 text-sm">Ask me anything about coding — safe & educational only</p>
       </div>
 
-      <section class="mb-12">
-        <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl">
-          <div class="flex flex-wrap gap-4 mb-6 items-center justify-between">
-            <h3 class="text-xl font-semibold flex items-center gap-2">
-              <i class="fa fa-pencil-square-o"></i> Code Editor
-            </h3>
-            <div class="flex gap-3">
-              <select id="langSelect" class="bg-black border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-white transition-colors">
-                <option value="javascript">JavaScript</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-                <option value="python">Python</option>
-              </select>
-              <button id="runBtn" class="bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-glow">
-                <i class="fa fa-play mr-1"></i> Run
-              </button>
-              <button id="clearBtn" class="bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                <i class="fa fa-trash mr-1"></i> Clear
-              </button>
-            </div>
-          </div>
-
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="relative">
-              <textarea id="codeInput" class="w-full h-[450px] bg-black/70 border border-neutral-800 rounded-xl p-4 font-mono text-sm resize-none focus:outline-none focus:border-white transition-colors scrollbar-hide" placeholder="Write your code here... Auto-saves as you type."></textarea>
-              <div class="absolute top-3 right-3 text-xs text-neutral-500">Auto-save ✔</div>
-            </div>
-
-            <div class="bg-black/70 border border-neutral-800 rounded-xl p-4 h-[450px] overflow-auto scrollbar-hide">
-              <h4 class="text-sm text-neutral-400 mb-3 flex items-center gap-2">
-                <i class="fa fa-terminal"></i> Output / Result
-              </h4>
-              <div id="output" class="font-mono text-sm text-neutral-200 whitespace-pre-wrap"></div>
-            </div>
+      <!-- AI CHAT BOX -->
+      <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl mb-8">
+        <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
+          <div class="text-neutral-400 text-center py-10">
+            <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
+            <p>Type any coding question below — I will write full working code for you!</p>
+            <p class="text-xs mt-2 text-success">✅ All requests filtered — safe, legal, educational only</p>
+            <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
           </div>
         </div>
-      </section>
 
-      <section class="grid md:grid-cols-3 gap-6 mb-12">
-        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.1s">
-          <i class="fa fa-check-square-o text-white text-2xl mb-4"></i>
-          <h4 class="font-bold mb-2">Syntax Checker</h4>
-          <p class="text-neutral-400 text-sm">Catch errors instantly while you learn.</p>
+        <div class="flex gap-3">
+          <input id="userInput" type="text" placeholder="Ask me anything..." 
+                 class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
+          <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-glow">
+            <i class="fa fa-paper-plane mr-2"></i> Send
+          </button>
         </div>
-        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.2s">
-          <i class="fa fa-align-left text-white text-2xl mb-4"></i>
-          <h4 class="font-bold mb-2">Code Formatter</h4>
-          <p class="text-neutral-400 text-sm">Clean and organize your code style.</p>
-        </div>
-        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.3s">
-          <i class="fa fa-book text-white text-2xl mb-4"></i>
-          <h4 class="font-bold mb-2">Reference Guide</h4>
-          <p class="text-neutral-400 text-sm">Quick syntax and examples for learning.</p>
-        </div>
-      </section>
+      </div>
 
-      <div class="text-center text-neutral-500 text-xs border-t border-neutral-900 pt-6">
-        <p>For educational purposes only. Misuse for scams, phishing, or illegal activities is prohibited.</p>
+      <!-- SAVED CODES -->
+      <div class="text-center text-neutral-500 text-xs border-t border-neutral-900 pt-4">
+        <p>💾 Auto-saving all generated codes to your account</p>
       </div>
     </main>
   </div>
 
   <script>
     let currentUser = null;
-    const codeInput = document.getElementById('codeInput');
-    const output = document.getElementById('output');
-    const runBtn = document.getElementById('runBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const langSelect = document.getElementById('langSelect');
+    const chatHistory = document.getElementById('chatHistory');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // 🚨 CONFIGURATION
+    const WEBHOOK_URL = "";
+    const MAX_WARNINGS = 5;
+    const prohibited = [
+      "scam", "scam website", "phishing", "fake login", "fake site", "steal", "hack", "fraud",
+      "carding", "credit card", "fake payment", "get free robux", "generate fake", "clone website",
+      "illegal", "malware", "virus", "exploit", "cheat", "phish", "fake bank", "fake account"
+    ];
+
+    // 📊 USER DATA
+    let userData = { warnings: 0, blocked: false, faults: [] };
 
     function handleGoogleSignIn(response) {
-      const credential = response.credential;
-      const payload = JSON.parse(atob(credential.split('.')[1]));
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      currentUser = { name: payload.name, email: payload.email, id: payload.sub };
       
-      currentUser = {
-        name: payload.name,
-        email: payload.email,
-        id: payload.sub
-      };
+      const saved = localStorage.getItem(`user_${currentUser.id}`);
+      if (saved) userData = JSON.parse(saved);
+
+      if (userData.blocked) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.body.innerHTML = `
+          <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
+            <div>
+              <i class="fa fa-ban text-danger text-6xl mb-4"></i>
+              <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
+              <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
 
       document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
-
-      loadSavedCode();
+      loadSavedChat();
     }
-
     function signOut() {
-      google.accounts.id.disableAutoSelect();
       currentUser = null;
       document.getElementById('dashboard').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
     }
 
-    codeInput.addEventListener('input', () => {
-      if (!currentUser) return;
-      localStorage.setItem(`code_${currentUser.id}`, codeInput.value);
-    });
+    // 💬 ADD MESSAGE
+    function addMessage(text, isUser = false) {
+      const div = document.createElement('div');
+      let classes = "max-w-[85%] p-4 rounded-xl ";
+      if (isUser) classes += "bg-white text-black ml-auto";
+      else classes += "bg-neutral-800 text-white mr-auto";
 
-    function loadSavedCode() {
-      const saved = localStorage.getItem(`code_${currentUser.id}`);
-      if (saved) codeInput.value = saved;
+      if (text.includes('```')) {
+        const parts = text.split('```');
+        let html = '';
+        for (let i=0; i<parts.length; i++) {
+          html += (i%2===1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g,'<br>');
+        }
+        div.innerHTML = html;
+      } else {
+        div.innerHTML = text.replace(/\n/g,'<br>');
+      }
+
+      chatHistory.appendChild(div);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      saveChat();
     }
 
-    runBtn.addEventListener('click', () => {
-      const code = codeInput.value.trim();
-      if (!code) { output.textContent = "⚠️ Please write some code first!"; return; }
-      output.textContent = "▶ Running...\n";
-      try {
-        if (langSelect.value === 'javascript') {
-          const log = [];
-          const oldLog = console.log;
-          console.log = (...args) => log.push(args.join(' '));
-          eval(code);
-          console.log = oldLog;
-          output.textContent += "✅ Done!\n" + log.join("\n");
-        } else {
-          output.textContent += `ℹ️ ${langSelect.value.toUpperCase()} support coming soon!`;
+    // 🚫 SILENT WARNING SYSTEM
+    function isRequestProhibited(text) {
+      const lower = text.toLowerCase();
+      const match = prohibited.some(word => lower.includes(word));
+      
+      if (match) {
+        userData.warnings += 1;
+        userData.faults.push(`#${userData.warnings}: ${text}`);
+        saveUserData();
+
+        if (userData.warnings < MAX_WARNINGS) return false;
+
+        if (userData.warnings >= MAX_WARNINGS && !userData.blocked) {
+          userData.blocked = true;
+          saveUserData();
+          triggerBlock();
+          return true;
         }
-      } catch (err) {
-        output.textContent += "❌ Error:\n" + err.message;
       }
+      return false;
+    }
+
+    // 📤 BLOCK + WEBHOOK
+    async function triggerBlock() {
+      sendBtn.disabled = true;
+      addMessage("🔄 Processing violation report...");
+
+      const payload = {
+        content: `**Gmail User :** ${currentUser.email} Has Been Blocked\n**Reason :** Exceeded 5 warnings (Terms of Service violation)\n**Sending Gmail User His Faults...**\n\n**Faults:**\n${userData.faults.join('\n')}`
+      };
+
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        setTimeout(() => {
+          addMessage(`✅ Message Sent to ${currentUser.email}\nMessage Sent: .`);
+          setTimeout(() => {
+            addMessage("❌ Access Revoked — You have been blocked.");
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            userInput.placeholder = "Blocked — Cannot send messages";
+          }, 3000);
+        }, 1500);
+
+      } catch (e) {
+        addMessage("⚠️ Error sending report. Still blocked.");
+      }
+    }
+
+    // 🧠 AI RESPONSE — 100% CLEAN, NO ROBLOX CODE INSIDE
+    function getAIResponse(question) {
+      return `✅ I write safe, educational, working code for:
+• HTML / CSS / JavaScript / Websites
+• Python / C# / Java / C++ / Programming
+• Any coding project or help you need
+
+Just tell me exactly what to make — I will give full working code!
+
+❌ Scams, hacks, or illegal content = BLOCKED.`;
+    }
+
+    // 📨 SEND MESSAGE
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      if (!text || userData.blocked) return;
+
+      addMessage(text, true);
+      userInput.value = '';
+
+      const isBad = isRequestProhibited(text);
+      if (isBad) return;
+
+      setTimeout(() => addMessage(getAIResponse(text)), 700);
     });
 
-    clearBtn.addEventListener('click', () => {
-      codeInput.value = "";
-      output.textContent = "";
-      if (currentUser) localStorage.removeItem(`code_${currentUser.id}`);
+    // ENTER KEY
+    userInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendBtn.click();
     });
+
+    // 💾 SAVE / LOAD
+    function saveUserData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
+    function saveChat() { if (!currentUser) return; localStorage.setItem(`chat_${currentUser.id}`, chatHistory.innerHTML); }
+    function loadSavedChat() { if (!currentUser) return; const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
   </script>
 </body>
 </html>
