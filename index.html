@@ -52,6 +52,8 @@
           This tool follows Google Terms of Service. Any request for scams, phishing, fake pages, fraud, or illegal content will be blocked immediately.
         </p>
 
+        <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
+
         <button id="deployBtn" onclick="loadExistingSession()" class="hidden w-full bg-success hover:bg-success/90 text-white font-medium py-3 px-4 rounded-xl mb-4 transition-all">
           Deploy Back to Site
         </button>
@@ -59,11 +61,12 @@
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
-             data-auto_prompt="false">
+             data-auto_prompt="false"
+             data-error_callback="handleSignInError">
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
       </div>
-      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe & Compliant</p>
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab Safe & Compliant</p>
     </div>
   </div>
 
@@ -137,6 +140,16 @@
       }
     };
 
+    function handleSignInError(error) {
+      const errBox = document.getElementById('errorBox');
+      errBox.classList.remove('hidden');
+      if (error.type === 'origin_mismatch') {
+        errBox.textContent = "Error: Origin mismatch — Add your site URL in Google Cloud Console → Credentials → Authorized Origins";
+      } else {
+        errBox.textContent = "Sign in error: " + error.type;
+      }
+    }
+
     function loadExistingSession() {
       const savedUser = JSON.parse(localStorage.getItem('currentUser'));
       if (!savedUser) return;
@@ -172,7 +185,7 @@
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         const saved = localStorage.getItem(`user_${currentUser.id}`);
-        if (saved) userData = JSON.parse(savedData);
+        if (saved) userData = JSON.parse(saved);
 
         if (userData.blocked) {
           document.body.innerHTML = `
@@ -187,7 +200,6 @@
           return;
         }
 
-        // THIS WAS MISSING BEFORE — NOW IT SWITCHES SCREENS PROPERLY
         document.getElementById('userName').textContent = currentUser.name;
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
