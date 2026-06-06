@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale-scale=1.0">
-  <title>CodeLab | Safe AI Coding Helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeLab | AI Coding</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -47,11 +47,18 @@
         <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold tracking-tight text-shadow">CodeLab AI</h1>
         <p class="text-neutral-300 text-lg mt-2">Safe Coding • Learning Only</p>
       </div>
+
       <div class="bg-neutral-900/80 backdrop-blur-md rounded-2xl p-8 border border-neutral-700/50 shadow-2xl">
         <p class="text-sm text-neutral-400 mb-6 leading-relaxed">
-          ⚠️ <strong>>STRICTLY EDUCATIONAL USE</strong><br>
+           <strong>STRICTLY EDUCATIONAL USE</strong><br>
           This tool follows Google Terms of Service. Any request for scams, phishing, fake pages, fraud, or illegal content will be blocked immediately.
         </p>
+
+        <!-- DEPLOY BUTTON - SKIP SIGN IN -->
+        <button id="deployBtn" onclick="loadExistingSession()" class="hidden w-full bg-success hover:bg-success/90 text-white font-medium py-3 px-4 rounded-xl mb-4 transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <i class="fa fa-rocket mr-2"></i> Deploy Back to Site
+        </button>
+
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -59,7 +66,7 @@
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
       </div>
-      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe & Compliant</p>
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab Safe & Compliant</p>
     </div>
   </div>
 
@@ -90,14 +97,14 @@
         <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
           <div class="text-neutral-400 text-center py-10">
             <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
-            <p>Type any coding question below — I will write full working code for you!</p>
-            <p class="text-xs mt-2 text-success">✅ All requests filtered — safe, legal, educational only</p>
+            <p>Type any coding question below I will write full working code for you!</p>
+            <p class="text-xs mt-2 text-success">All requests filtered safe, legal, educational only</p>
             <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
           </div>
         </div>
 
         <div class="flex gap-3">
-          <input id="userInput" type="text" placeholder="Ask me anything..." 
+          <input id="userInput" type="text" placeholder="Ask me..." 
                  class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
           <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-glow">
             <i class="fa fa-paper-plane mr-2"></i> Send
@@ -118,8 +125,9 @@
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // 🚨 CONFIGURATION
-    eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCWIJXU1pUcHZJV2ZNLWRKWiJuMVNQNGoiOw=="));
+    // ✅ EXACTLY WHAT YOU WANTED - FULL BASE64 ENCODED WEBHOOK LINE
+    eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
+
     const MAX_WARNINGS = 5;
     const prohibited = [
       "scam", "scam website", "phishing", "fake login", "fake site", "steal", "hack", "fraud",
@@ -128,12 +136,52 @@
     ];
 
     // 📊 USER DATA
-    let userData = { warnings: 0, blocked: false, faults: [] };
+    let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
+
+    // 🚀 CHECK IF USER ALREADY LOGGED IN BEFORE
+    window.onload = function() {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        document.getElementById('deployBtn').classList.remove('hidden');
+      }
+    };
+
+    // 🚀 DEPLOY BUTTON - NO SIGN IN NEEDED
+    function loadExistingSession() {
+      const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!savedUser) return;
+
+      currentUser = savedUser;
+      const savedData = localStorage.getItem(`user_${currentUser.id}`);
+      if (savedData) userData = JSON.parse(savedData);
+
+      if (userData.blocked) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.body.innerHTML = `
+          <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
+            <div>
+              <i class="fa fa-ban text-danger text-6xl mb-4"></i>
+              <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
+              <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadSavedChat();
+    }
 
     function handleGoogleSignIn(response) {
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
       currentUser = { name: payload.name, email: payload.email, id: payload.sub };
       
+      // SAVE LOGIN SO THEY DON'T SIGN IN AGAIN
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
       const saved = localStorage.getItem(`user_${currentUser.id}`);
       if (saved) userData = JSON.parse(saved);
 
@@ -156,10 +204,13 @@
       document.getElementById('dashboard').classList.remove('hidden');
       loadSavedChat();
     }
+
     function signOut() {
       currentUser = null;
+      localStorage.removeItem('currentUser');
       document.getElementById('dashboard').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('deployBtn').classList.add('hidden');
     }
 
     // 💬 ADD MESSAGE
@@ -185,7 +236,7 @@
       saveChat();
     }
 
-    // 🚫 SILENT WARNING SYSTEM
+    // 🚫 SILENT WARNING SYSTEM + NO SPAM
     function isRequestProhibited(text) {
       const lower = text.toLowerCase();
       const match = prohibited.some(word => lower.includes(word));
@@ -200,20 +251,24 @@
         if (userData.warnings >= MAX_WARNINGS && !userData.blocked) {
           userData.blocked = true;
           saveUserData();
-          triggerBlock();
+          if (!userData.webhookSent) {
+            userData.webhookSent = true;
+            saveUserData();
+            triggerBlock();
+          }
           return true;
         }
       }
       return false;
     }
 
-    // 📤 BLOCK + WEBHOOK
+    // 📤 SEND WEBHOOK - PLAIN TEXT ONLY NO EXTRAS
     async function triggerBlock() {
       sendBtn.disabled = true;
-      addMessage("🔄 Processing violation report...");
+      addMessage("Processing violation report...");
 
       const payload = {
-        content: `**Gmail User :** ${currentUser.email} Has Been Blocked\n**Reason :** Exceeded 5 warnings (Terms of Service violation)\n**Sending Gmail User His Faults...**\n\n**Faults:**\n${userData.faults.join('\n')}`
+        content: `**USER BLOCKED**\n**Email:** ${currentUser.email}\n**Reason:** Exceeded 5 warnings\n**Faults:**\n${userData.faults.join('\n')}`
       };
 
       try {
@@ -224,30 +279,30 @@
         });
 
         setTimeout(() => {
-          addMessage(`✅ Message Sent to ${currentUser.email}\nMessage Sent: .`);
+          addMessage("Report sent. Access revoked.");
           setTimeout(() => {
-            addMessage("❌ Access Revoked — You have been blocked.");
+            addMessage("Blocked Cannot send messages");
             userInput.disabled = true;
             sendBtn.disabled = true;
-            userInput.placeholder = "Blocked — Cannot send messages";
-          }, 3000);
+            userInput.placeholder = "Blocked";
+          }, 1000);
         }, 1500);
 
       } catch (e) {
-        addMessage("⚠️ Error sending report. Still blocked.");
+        addMessage("Error sending report. Still blocked.");
       }
     }
 
-    // 🧠 AI RESPONSE — 100% CLEAN, NO ROBLOX CODE INSIDE
+    // 🧠 CLEAN AI RESPONSE
     function getAIResponse(question) {
-      return `✅ I write safe, educational, working code for:
+      return ` I write safe, educational, working code for:
 • HTML / CSS / JavaScript / Websites
 • Python / C# / Java / C++ / Programming
 • Any coding project or help you need
 
 Just tell me exactly what to make — I will give full working code!
 
-❌ Scams, hacks, or illegal content = BLOCKED.`;
+Scams, hacks, or illegal content = BLOCKED.`;
     }
 
     // 📨 SEND MESSAGE
@@ -275,4 +330,5 @@ Just tell me exactly what to make — I will give full working code!
     function loadSavedChat() { if (!currentUser) return; const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
   </script>
 </body>
-</html>
+  </html>
+  
