@@ -1,9 +1,9 @@
 const express = require("express");
-const fetch = require("node-fetch"); // ✅ Now it exists!
+const fetch = require("node-fetch");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// ✅ YOUR EXACT VARIABLES
+// ✅ YOUR VARIABLES
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
 const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
@@ -13,8 +13,13 @@ let blockedUsers = [];
 app.use(express.json());
 app.use(express.static("."));
 
-// ✅ AUTO MESSAGE WHEN ONLINE
+// ✅ ONLINE MESSAGE
 sendDiscordLog("✅ SYSTEM ONLINE", "Im Active ready to give u bloc logs", 65280);
+
+// ✅ SECRET DASHBOARD — NOW WORKS 100%
+app.get("/secret-dashboard-jojo67", (req, res) => {
+  res.sendFile(__dirname + "/secret-dashboard.html");
+});
 
 // AI Chat
 app.post("/api/ai", async (req, res) => {
@@ -29,7 +34,7 @@ app.post("/api/ai", async (req, res) => {
       body: JSON.stringify({
         model: model,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.1
+        temperature: 0.7 // ✅ MORE FRIENDLY
       })
     });
 
@@ -108,4 +113,4 @@ async function sendDiscordLog(title, description, color) {
   } catch (e) {}
 }
 
-app.listen(port, () => console.log(`✅ Running | Secret: /secret-dashboard-jojo67`));
+app.listen(port, () => console.log(`✅ Running | Secret Dashboard`));
