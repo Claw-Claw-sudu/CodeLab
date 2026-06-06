@@ -37,14 +37,14 @@
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
-  <!-- DEPLOY BUTTON - ALWAYS VISIBLE & WORKING -->
+  <!-- DEPLOY BUTTON - TOP RIGHT, ALWAYS WORKING -->
   <div class="fixed top-4 right-4 z-[60]">
     <button id="deployBtn" onclick="deployAction()" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg">
       Deploy
     </button>
   </div>
 
-  <!-- LOGIN SCREEN - ALWAYS SHOWS YOUR CLIENT ID -->
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
     <div class="max-w-md w-full text-center animate-slide-up">
@@ -62,7 +62,7 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
-        <!-- ✅ YOUR EXACT CLIENT ID ALWAYS HERE -->
+        <!-- YOUR EXACT CLIENT ID HERE -->
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -75,7 +75,7 @@
     </div>
   </div>
 
-  <!-- DASHBOARD -->
+  <!-- ✅ FULL WORKING DASHBOARD HERE -->
   <div id="dashboard" class="hidden animate-fade-in">
     <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
       <div class="container mx-auto flex items-center justify-between">
@@ -140,7 +140,7 @@
 
     let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
 
-    // ✅ DEPLOY BUTTON LOGIC — ALWAYS SHOWS SIGN-IN WITH YOUR CLIENT ID IF NOT SIGNED IN
+    // ✅ DEPLOY BUTTON LOGIC — NOW PERFECT
     function deployAction() {
       const savedUser = localStorage.getItem('currentUser');
       
@@ -148,7 +148,7 @@
         // ✅ ALREADY SIGNED IN → GO STRAIGHT TO DASHBOARD
         loadExistingSession();
       } else {
-        // ✅ NOT SIGNED IN → SHOW LOGIN SCREEN WITH YOUR CLIENT ID
+        // ✅ NOT SIGNED IN → SHOW LOGIN WITH YOUR CLIENT ID
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('dashboard').classList.add('hidden');
       }
@@ -187,6 +187,7 @@
         return;
       }
 
+      // ✅ SHOW DASHBOARD NOW
       document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
@@ -215,6 +216,7 @@
           return;
         }
 
+        // ✅ AFTER SIGN IN → GO TO DASHBOARD
         document.getElementById('userName').textContent = currentUser.name;
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
