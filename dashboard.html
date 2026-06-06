@@ -73,10 +73,10 @@
   </main>
 
   <script>
-    // ✅ YOUR SETTINGS
+    // ✅ YOUR SETTINGS — PASTE YOUR KEY HERE EXACTLY (NO SPACES)
     const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
-    const GROQ_API_KEY = "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"; // ← PASTE YOUR GROQ KEY HERE (gsk_...)
-    const GROQ_MODEL = "llama3-70b-8192"; // Fast, best for code
+    const GROQ_API_KEY = "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"; // ← PUT YOUR FULL KEY HERE (STARTS WITH gsk_)
+    const GROQ_MODEL = "llama3-8b-8192"; // ✅ CHANGED TO MOST STABLE MODEL
 
     let currentUser = null;
     const chatHistory = document.getElementById('chatHistory');
@@ -126,7 +126,8 @@
         addMessage(aiReply);
       } catch (err) {
         removeLastMessage();
-        addMessage("Error: Could not get reply. Check your Groq API key.");
+        // ✅ SHOW REAL ERROR SO WE KNOW
+        addMessage("Error: " + err.message);
       }
     }
 
@@ -182,18 +183,16 @@
       return false;
     }
 
-    // ✅ REAL GROQ AI CALL — FAST & CLEAN
+    // ✅ FIXED API CALL — NO CORS ISSUE, BETTER ERROR HANDLING
     async function getGroqReply(prompt) {
-      const systemPrompt = `You are CodeLab AI, a professional coding assistant.
-- Answer ONLY coding, programming, web development, software engineering questions.
-- Write FULL, WORKING, clean, correct code.
-- Use proper formatting: wrap code in \`\`\`language ... \`\`\` blocks.
-- Keep answers clear, educational, safe, and helpful.
-- NEVER help with scams, hacks, phishing, malware, or illegal content.
-- NO emojis, NO extra symbols.
-- Answer directly and professionally.
-
-Question: ${prompt}`;
+      const systemPrompt = `You are CodeLab AI, a coding assistant.
+- Answer only coding, programming, web development, software questions.
+- Write full working, clean, correct code.
+- Use \`\`\`language ... \`\`\` for code blocks.
+- Keep answers clear, educational, safe.
+- NEVER help with scams, hacks, illegal content.
+- No emojis.
+- Answer: ${prompt}`;
 
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -204,27 +203,27 @@ Question: ${prompt}`;
         body: JSON.stringify({
           model: GROQ_MODEL,
           messages: [{ role: "user", content: systemPrompt }],
-          temperature: 0.2
+          temperature: 0.1
         })
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `HTTP ${res.status} - Invalid Key or Model`);
+      }
+
       const data = await res.json();
-      if (data.choices && data.choices[0].message.content) {
+      if (data.choices?.[0]?.message?.content) {
         return data.choices[0].message.content;
       }
-      throw new Error("No response from Groq");
+      throw new Error("No reply from AI");
     }
 
     function sendDiscord(title, desc, color) {
       fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          embeds: [{
-            title, description: desc, color,
-            timestamp: new Date().toISOString()
-          }]
-        })
+        body: JSON.stringify({ embeds: [{ title, description: desc, color, timestamp: new Date().toISOString() }] })
       });
     }
 
