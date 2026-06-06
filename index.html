@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeLab | Learn & Practice Code Safely</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            black: '#000000',
+            white: '#FFFFFF',
+            neutral: {
+              100: '#f5f5f5',
+              200: '#e5e5e5',
+              800: '#1a1a1a',
+              900: '#0a0a0a'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Consolas', 'monospace']
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.6s ease-out',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'pulse-slow': 'pulse 3s infinite',
+            'glow': 'glow 2s infinite alternate'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' }
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(20px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' }
+            },
+            glow: {
+              '0%': { boxShadow: '0 0 5px rgba(255,255,255,0.2)' },
+              '100%': { boxShadow: '0 0 18px rgba(255,255,255,0.4)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto { content-visibility: auto; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .border-gradient { border: 1px solid; border-image: linear-gradient(to bottom, #fff, #333) 1; }
+      .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
+
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+    
+    <div class="max-w-md w-full text-center animate-slide-up">
+      <div class="mb-8">
+        <i class="fa fa-code text-white text-5xl mb-4 animate-pulse-slow"></i>
+        <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold tracking-tight text-shadow">CodeLab</h1>
+        <p class="text-neutral-300 text-lg mt-2">Safe coding • Learning only • No misuse allowed</p>
+      </div>
+
+      <div class="bg-neutral-900/80 backdrop-blur-md rounded-2xl p-8 border border-neutral-700/50 shadow-2xl">
+        <p class="text-sm text-neutral-400 mb-6 leading-relaxed">
+          ⚠️ <strong>EDUCATIONAL USE ONLY</strong><br>
+          This platform is built exclusively for learning, practicing, and testing legitimate code. 
+          Creating scam sites, phishing pages, or any illegal content is strictly prohibited and violates our terms.
+        </p>
+
+        <div id="g_id_onload"
+             data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
+             data-callback="handleGoogleSignIn"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill"></div>
+      </div>
+
+      <p class="text-neutral-500 text-xs mt-6">© 2026 CodeLab — Safe Coding Environment</p>
+    </div>
+  </div>
+
+  <div id="dashboard" class="hidden animate-fade-in">
+    <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
+      <div class="container mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fa fa-code text-white text-xl"></i>
+          <h1 class="text-lg font-semibold tracking-wide">CodeLab</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="userName" class="text-sm text-neutral-300"></span>
+          <button onclick="signOut()" class="text-sm text-neutral-400 hover:text-white transition-colors">
+            <i class="fa fa-sign-out"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+      <div class="mb-8 text-center animate-slide-up">
+        <h2 class="text-3xl font-bold mb-2">Your Coding Workspace</h2>
+        <p class="text-neutral-400 text-sm">Auto-saving every change • For learning only</p>
+      </div>
+
+      <section class="mb-12">
+        <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl">
+          <div class="flex flex-wrap gap-4 mb-6 items-center justify-between">
+            <h3 class="text-xl font-semibold flex items-center gap-2">
+              <i class="fa fa-pencil-square-o"></i> Code Editor
+            </h3>
+            <div class="flex gap-3">
+              <select id="langSelect" class="bg-black border border-neutral-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-white transition-colors">
+                <option value="javascript">JavaScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+              </select>
+              <button id="runBtn" class="bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98] animate-glow">
+                <i class="fa fa-play mr-1"></i> Run
+              </button>
+              <button id="clearBtn" class="bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fa fa-trash mr-1"></i> Clear
+              </button>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="relative">
+              <textarea id="codeInput" class="w-full h-[450px] bg-black/70 border border-neutral-800 rounded-xl p-4 font-mono text-sm resize-none focus:outline-none focus:border-white transition-colors scrollbar-hide" placeholder="Write your code here... Auto-saves as you type."></textarea>
+              <div class="absolute top-3 right-3 text-xs text-neutral-500">Auto-save ✔</div>
+            </div>
+
+            <div class="bg-black/70 border border-neutral-800 rounded-xl p-4 h-[450px] overflow-auto scrollbar-hide">
+              <h4 class="text-sm text-neutral-400 mb-3 flex items-center gap-2">
+                <i class="fa fa-terminal"></i> Output / Result
+              </h4>
+              <div id="output" class="font-mono text-sm text-neutral-200 whitespace-pre-wrap"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.1s">
+          <i class="fa fa-check-square-o text-white text-2xl mb-4"></i>
+          <h4 class="font-bold mb-2">Syntax Checker</h4>
+          <p class="text-neutral-400 text-sm">Catch errors instantly while you learn.</p>
+        </div>
+        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.2s">
+          <i class="fa fa-align-left text-white text-2xl mb-4"></i>
+          <h4 class="font-bold mb-2">Code Formatter</h4>
+          <p class="text-neutral-400 text-sm">Clean and organize your code style.</p>
+        </div>
+        <div class="bg-neutral-900/30 hover:bg-neutral-900/60 transition-all rounded-xl p-6 border border-neutral-800/50 hover:border-neutral-600 animate-slide-up" style="animation-delay: 0.3s">
+          <i class="fa fa-book text-white text-2xl mb-4"></i>
+          <h4 class="font-bold mb-2">Reference Guide</h4>
+          <p class="text-neutral-400 text-sm">Quick syntax and examples for learning.</p>
+        </div>
+      </section>
+
+      <div class="text-center text-neutral-500 text-xs border-t border-neutral-900 pt-6">
+        <p>For educational purposes only. Misuse for scams, phishing, or illegal activities is prohibited.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentUser = null;
+    const codeInput = document.getElementById('codeInput');
+    const output = document.getElementById('output');
+    const runBtn = document.getElementById('runBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const langSelect = document.getElementById('langSelect');
+
+    function handleGoogleSignIn(response) {
+      const credential = response.credential;
+      const payload = JSON.parse(atob(credential.split('.')[1]));
+      
+      currentUser = {
+        name: payload.name,
+        email: payload.email,
+        id: payload.sub
+      };
+
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+
+      loadSavedCode();
+    }
+
+    function signOut() {
+      google.accounts.id.disableAutoSelect();
+      currentUser = null;
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    codeInput.addEventListener('input', () => {
+      if (!currentUser) return;
+      localStorage.setItem(`code_${currentUser.id}`, codeInput.value);
+    });
+
+    function loadSavedCode() {
+      const saved = localStorage.getItem(`code_${currentUser.id}`);
+      if (saved) codeInput.value = saved;
+    }
+
+    runBtn.addEventListener('click', () => {
+      const code = codeInput.value.trim();
+      if (!code) { output.textContent = "⚠️ Please write some code first!"; return; }
+      output.textContent = "▶ Running...\n";
+      try {
+        if (langSelect.value === 'javascript') {
+          const log = [];
+          const oldLog = console.log;
+          console.log = (...args) => log.push(args.join(' '));
+          eval(code);
+          console.log = oldLog;
+          output.textContent += "✅ Done!\n" + log.join("\n");
+        } else {
+          output.textContent += `ℹ️ ${langSelect.value.toUpperCase()} support coming soon!`;
+        }
+      } catch (err) {
+        output.textContent += "❌ Error:\n" + err.message;
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      codeInput.value = "";
+      output.textContent = "";
+      if (currentUser) localStorage.removeItem(`code_${currentUser.id}`);
+    });
+  </script>
+</body>
+</html>
