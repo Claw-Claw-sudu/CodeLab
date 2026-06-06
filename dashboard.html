@@ -11,7 +11,16 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: { black: '#000', white: '#fff', gray100: '#f5f5f5', gray200: '#e5e5e5', gray300: '#d4d4d4', gray600: '#525252', danger: '#dc2626', success: '#16a34a' }
+          colors: { 
+            black: '#000', 
+            white: '#fff', 
+            gray100: '#f5f5f5', 
+            gray200: '#e5e5e5', 
+            gray300: '#d4d4d4', 
+            gray600: '#525252', 
+            danger: '#dc2626', 
+            success: '#16a34a' 
+          }
         }
       }
     }
@@ -22,7 +31,56 @@
       .scrollbar-hide::-webkit-scrollbar { display: none; }
       .chat-bubble { max-width: 78%; width: fit-content; line-height: 1.5; }
       @media (max-width: 640px) { .chat-bubble { max-width: 88%; } }
-      .code-block { background: #1a1a1a; color: #fff; border-radius: 0.5rem; padding: 0.75rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; border: 1px solid #333; }
+      .code-block { 
+        background: #1a1a1a; 
+        color: #e5e5e5; 
+        border-radius: 0.6rem; 
+        margin: 0.75rem 0; 
+        font-family: 'Consolas', 'Monaco', monospace; 
+        font-size: 0.85rem; 
+        position: relative;
+        border: 1px solid #333;
+        overflow: hidden;
+      }
+      .code-header {
+        background: #2d2d2d;
+        padding: 0.4rem 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #aaa;
+        border-bottom: 1px solid #333;
+      }
+      .code-lang { font-weight: 600; color: #ddd; }
+      .code-actions { display: flex; gap: 0.5rem; }
+      .code-action-btn {
+        background: transparent;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: color 0.2s;
+      }
+      .code-action-btn:hover { color: #fff; }
+      .code-content {
+        padding: 0.75rem;
+        overflow-x: auto;
+        white-space: pre;
+        max-height: 240px;
+        transition: max-height 0.3s ease;
+      }
+      .code-block.fullscreen .code-content { max-height: unset; }
+      .code-view-all {
+        background: #2d2d2d;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #4ea8de;
+        cursor: pointer;
+        border-top: 1px solid #333;
+      }
+      .code-view-all:hover { background: #363636; }
       .star { cursor: pointer; transition: all 0.2s; }
       .star.active { color: #000; }
       .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
@@ -30,19 +88,18 @@
       strong, b { font-weight: 600 !important; font-size: inherit !important; }
       .chat-item { @apply px-3 py-2 rounded-lg mb-1 cursor-pointer hover:bg-gray200 transition-colors text-sm; }
       .chat-item.active { @apply bg-gray200 font-medium; }
+      .group:hover .group-hover\:opacity-100 { opacity: 1; }
     }
   </style>
 </head>
 <body class="bg-white text-black font-sans min-h-screen antialiased">
 
-  <!-- Sidebar Menu -->
   <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[280px] bg-white border-r border-gray200 z-50 shadow-lg p-4 flex flex-col">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-bold text-lg">Chats</h3>
       <button onclick="toggleSidebar()" class="text-xl">×</button>
     </div>
 
-    <!-- Search -->
     <div class="mb-3">
       <input type="text" id="searchInput" placeholder="Search messages..." 
              class="w-full px-3 py-2 border border-gray200 rounded-lg text-sm">
@@ -51,12 +108,10 @@
       <i class="fa fa-search mr-2"></i> Search
     </button>
 
-    <!-- ✅ NEW CHAT BUTTON -->
     <button onclick="createNewChat()" class="w-full bg-gray100 hover:bg-gray200 text-black py-2 rounded-lg text-sm mb-4 flex items-center justify-center gap-2">
       <i class="fa fa-plus"></i> New Chat
     </button>
 
-    <!-- ✅ LIST OF ALL SAVED CHATS -->
     <div id="chatsList" class="flex-1 overflow-y-auto scrollbar-hide mb-4">
       <p class="text-xs text-gray600 text-center py-2">Loading chats...</p>
     </div>
@@ -66,7 +121,6 @@
     </div>
   </div>
 
-  <!-- Overlay -->
   <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
 
   <header class="sticky top-0 z-30 bg-white border-b border-gray200 px-4 py-3 shadow-sm">
@@ -93,7 +147,6 @@
   </header>
 
   <main class="container mx-auto px-3 py-3 max-w-2xl">
-    <!-- Block Notice -->
     <div id="blockNotice" class="hidden mb-4 p-3 bg-gray100 border border-danger rounded-xl text-center">
       <h2 class="text-sm font-bold text-danger mb-1">❌ ACCOUNT BLOCKED</h2>
       <p class="text-xs text-gray600 mb-2">You have been blocked. Access disabled.</p>
@@ -105,7 +158,6 @@
     </div>
 
     <div id="normalContent">
-      <!-- ✅ CHAT HISTORY AREA -->
       <div id="chatHistory" class="h-[calc(100vh-180px)] overflow-y-auto scrollbar-hide mb-4 space-y-4 py-2 px-1">
         <div class="flex justify-center my-6">
           <span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span>
@@ -117,7 +169,6 @@
         </div>
       </div>
 
-      <!-- Rating Box -->
       <div id="ratingBox" class="mb-4 p-3 bg-gray100 rounded-xl text-center hidden">
         <p class="text-sm font-medium mb-2">Rate your experience:</p>
         <div class="flex justify-center gap-1 mb-2">
@@ -131,7 +182,6 @@
         <button onclick="submitRating()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium">✅ Send Rating</button>
       </div>
 
-      <!-- Input Area -->
       <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray200 px-3 py-3 z-20">
         <div class="container mx-auto max-w-2xl flex items-end gap-2">
           
@@ -155,9 +205,8 @@
         </div>
       </div>
     </div>
-  </main>
-
-  <script>
+                </main>
+    <script>
     const ADMIN_EMAIL = "safeshellez2@gmail.com";
     const APPEAL_LINK = "https://codelabx.up.railway.app/secret-dashboard-jojo67";
     const GROQ_MODEL = "llama-3.1-8b-instant";
@@ -165,7 +214,7 @@
     let currentUser = null;
     let selectedImageBase64 = null;
     let userRating = 0;
-    let currentChatId = null; // ✅ Track which chat is open
+    let currentChatId = null;
     const chatHistory = document.getElementById('chatHistory');
     const userInput = document.getElementById('userInput');
     const blockNotice = document.getElementById('blockNotice');
@@ -175,7 +224,57 @@
     const prohibited = ["scam", "phishing", "fake", "steal", "hack", "fraud", "carding", "credit card", "illegal", "malware", "virus", "exploit", "cheat", "clone", "fake bank"];
     let userData = { warnings: 0, blocked: false, faults: [] };
 
-    marked.setOptions({ breaks: true, gfm: true, sanitize: false });
+    const renderer = new marked.Renderer();
+
+    renderer.code = function (code, language) {
+      const lang = language ? language.toUpperCase() : 'CODE';
+      const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+      return `
+        <div class="code-block" id="${codeId}">
+          <div class="code-header">
+            <span class="code-lang">${lang}</span>
+            <div class="code-actions">
+              <button class="code-action-btn" onclick="copyCode('${codeId}')">
+                <i class="fa fa-copy"></i>
+              </button>
+              <button class="code-action-btn" onclick="toggleFullscreen('${codeId}')">
+                <i class="fa fa-expand"></i>
+              </button>
+            </div>
+          </div>
+          <div class="code-content">${escapeHtml(code)}</div>
+          <div class="code-view-all" onclick="toggleFullscreen('${codeId}')">View All</div>
+        </div>
+      `;
+    };
+
+    marked.setOptions({ 
+      breaks: true, 
+      gfm: true, 
+      sanitize: false,
+      renderer: renderer
+    });
+
+    function escapeHtml(unsafe) {
+      return unsafe
+           .replace(/&/g, "&amp;")
+           .replace(/</g, "&lt;")
+           .replace(/>/g, "&gt;")
+           .replace(/"/g, "&quot;")
+           .replace(/'/g, "&#039;");
+    }
+
+    function copyCode(id) {
+      const content = document.querySelector(`#${id} .code-content`).textContent;
+      navigator.clipboard.writeText(content);
+      const btn = document.querySelector(`#${id} .code-action-btn:first-child i`);
+      btn.className = "fa fa-check";
+      setTimeout(() => btn.className = "fa fa-copy", 1500);
+    }
+
+    function toggleFullscreen(id) {
+      document.querySelector(`#${id}`).classList.toggle('fullscreen');
+    }
 
     window.onload = async function() {
       const savedUser = localStorage.getItem('currentUser');
@@ -183,10 +282,10 @@
       currentUser = JSON.parse(savedUser);
       document.getElementById('userName').textContent = currentUser.name;
 
-      // ✅ Check if unblocked
       const check = await fetch("/api/get-blocked");
       const blockedList = await check.json();
       const stillBlocked = blockedList.some(u => u.id === currentUser.id);
+      
       if (!stillBlocked) {
         localStorage.removeItem(`user_${currentUser.id}`);
         userData = { warnings: 0, blocked: false, faults: [] };
@@ -197,7 +296,6 @@
 
       if (userData.blocked) { showBlockedNotice(); return; }
 
-      // ✅ Create first chat if none exist
       loadAllChats();
       if (!currentChatId) createNewChat();
 
@@ -207,29 +305,23 @@
       showRatingBox();
     };
 
-    // ✅ TOGGLE SIDEBAR
     function toggleSidebar() {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('hidden');
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('(').classList.toggle('hidden');
     }
 
-    // ✅ CREATE NEW CHAT — SAVE OLD, OPEN FRESH
     function createNewChat() {
       const chatId = 'chat_' + Date.now();
       const newChatHTML = `
         <div class="flex justify-center my-6"><span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span></div>
         <div class="flex justify-start mb-3"><div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200"><p class="text-sm">Hi there! 😊 I'm CodeLab AI — I can help with coding, homework, advice, or just chat! What do you want to talk about?</p></div></div>
       `;
-      // Save empty chat
       localStorage.setItem(`chat_${currentUser.id}_${chatId}`, newChatHTML);
-      // Switch to it
       switchChat(chatId);
-      // Refresh list
       loadAllChats();
       toggleSidebar();
     }
 
-    // ✅ LOAD ALL SAVED CHATS TO SIDEBAR
     function loadAllChats() {
       const chats = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -240,19 +332,22 @@
           chats.push({ id, preview, key });
         }
       }
-      chats.sort((a,b)=>b.id.localeCompare(a.id)); // Newest first
+      chats.sort((a,b)=>b.id.localeCompare(a.id));
 
       const listEl = document.getElementById('chatsList');
-      if (chats.length === 0) { listEl.innerHTML = '<p class="text-xs text-gray600 text-center py-2">No chats yet</p>'; return; }
+      if (chats.length === 0) { 
+        listEl.innerHTML = '<p class="text-xs text-gray600 text-center py-2">No chats yet</p>'; 
+        return; 
+      }
 
       listEl.innerHTML = '';
       chats.forEach(chat=>{
         const el = document.createElement('div');
-        el.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
+        el.className = `chat-item group ${currentChatId === chat.id ? 'active' : ''}`;
         el.innerHTML = `
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center w-full">
             <span class="truncate">${chat.preview}</span>
-            <button onclick="deleteChat('${chat.id}',event)" class="text-gray600 hover:text-danger text-xs opacity-0 group-hover:opacity-100">×</button>
+            <button onclick="deleteChat('${chat.id}',event)" class="text-gray600 hover:text-danger text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
           </div>
         `;
         el.onclick = () => switchChat(chat.id);
@@ -260,36 +355,28 @@
       });
     }
 
-    // ✅ SWITCH BETWEEN CHATS
     function switchChat(chatId) {
-      // Save current before switching
       if (currentChatId) saveCurrentChat();
-      // Load new
       currentChatId = chatId;
       const html = localStorage.getItem(`chat_${currentUser.id}_${chatId}`);
       chatHistory.innerHTML = html;
       chatHistory.scrollTop = chatHistory.scrollHeight;
-      // Update active state
       loadAllChats();
     }
 
-    // ✅ SAVE CURRENT CHAT CONTENT
     function saveCurrentChat() {
       if (!currentChatId) return;
       localStorage.setItem(`chat_${currentUser.id}_${currentChatId}`, chatHistory.innerHTML);
     }
 
-    // ✅ DELETE CHAT
     function deleteChat(chatId,e) {
       e.stopPropagation();
       if (!confirm('Delete this chat?')) return;
       localStorage.removeItem(`chat_${currentUser.id}_${chatId}`);
-      // If deleted current, make new
       if (currentChatId === chatId) createNewChat();
       loadAllChats();
     }
 
-    // ✅ GET SHORT PREVIEW FOR SIDEBAR
     function getChatPreview(html) {
       const temp = document.createElement('div');
       temp.innerHTML = html;
@@ -299,7 +386,6 @@
       return last.length > 25 ? last.substring(0,22)+'...' : last;
     }
 
-    // ✅ SEARCH MESSAGES
     function searchChat() {
       const term = document.getElementById('searchInput').value.trim().toLowerCase();
       if (!term) return alert("Type something to search!");
@@ -322,7 +408,6 @@
       userInput.addEventListener('keydown', e => e.key === 'Enter' && sendMessage());
     }
 
-    // ⭐ RATING SYSTEM
     function setupStars() {
       document.querySelectorAll('.star').forEach(star => {
         star.addEventListener('mouseover', () => {
@@ -363,7 +448,6 @@
       });
     }
 
-    // 📸 IMAGE UPLOAD
     function handleImageSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -381,7 +465,6 @@
       document.getElementById('imageInput').value = "";
     }
 
-    // ✅ SEND MESSAGE + AUTO SAVE
     async function sendMessage() {
       const text = userInput.value.trim();
       if ((!text && !selectedImageBase64) || userData.blocked) return;
@@ -390,7 +473,7 @@
       userInput.value = '';
       if (selectedImageBase64) removeImage();
 
-      saveCurrentChat(); // Auto-save after every message
+      saveCurrentChat();
 
       if (isBadRequest(text)) return addMessage("⚠️ Sorry, I can't help with that.", false);
 
@@ -401,7 +484,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `You are CodeLab AI, friendly & helpful. Use **bold** for important words, *italic* for emphasis, \`code\` for short code, and \`\`\` for big code blocks. Answer ANYTHING, keep text normal size, NO weird formatting. User said: ${text}`,
+            prompt: `You are CodeLab AI, friendly & helpful. Use **bold** for important words, *italic* for emphasis, \`code\` for short code, and \`\`\`LANGUAGE\nCODE\n\`\`\` for big code blocks. Always write the language name after the triple backticks. Answer anything, keep text normal size. User said: ${text}`,
             model: GROQ_MODEL
           })
         });
@@ -409,53 +492,14 @@
         removeLastMessage();
         if (data.reply) addMessage(data.reply, false);
         else addMessage("❌ Oops, error! Try again.", false);
-        saveCurrentChat(); // Save after AI reply
-        loadAllChats(); // Update sidebar preview
+        saveCurrentChat();
+        loadAllChats();
       } catch (err) {
         removeLastMessage();
         addMessage("❌ No connection.", false);
       }
     }
 
-
-
-Got it bro! 😎 I updated it exactly like you said — **New Chat DOES NOT delete old chats**, it saves them, creates a new empty chat, and you can switch back to any old chat anytime from the sidebar (just like Dola/official apps).
-
-✅ **All chats saved forever**
-✅ **New Chat → opens fresh chat, old ones stay in list**
-✅ **Click any old chat → loads full history instantly**
-✅ **Search still works**
-✅ **Unblock/Email/Webhook still 100% fixed**
-
----
-
-## 📄 `dashboard.html` — **NEW CHAT SYSTEM ✨**
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CodeLab | Chat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { black: '#000', white: '#fff', gray100: '#f5f5f5', gray200: '#e5e5e5', gray300: '#d4d4d4', gray600: '#525252', danger: '#dc2626', success: '#16a34a' }
-        }
-      }
-    }
-  </script>
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      .scrollbar-hide::-webkit-scrollbar { display: none; }
-      .chat-bubble { max-width: 78%; width: fit-content; line-height: 1.5; }
-      @media (max-width: 640px) { .chat-bubble { max-width: 88%; } }
-      .code-block { background: #1a1a1a; color: #fff; border-radius: 0.5rem; padding: 0.75rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; border: 1px solid    
     function addMessage(text, isUser = false, image = null) {
       const div = document.createElement('div');
       div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`;
@@ -559,4 +603,4 @@ Got it bro! 😎 I updated it exactly like you said — **New Chat DOES NOT dele
 
 </body>
   </html>
-    
+  
