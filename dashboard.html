@@ -34,14 +34,45 @@
       .code-block { background: #1a1a1a; color: #ffffff; border-radius: 0.5rem; padding: 0.75rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; border: 1px solid #333; }
       .star { cursor: pointer; transition: all 0.2s; }
       .star.active { color: #000; }
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+      .sidebar.open { transform: translateX(0); }
     }
   </style>
 </head>
 <body class="bg-white text-black font-sans min-h-screen antialiased">
 
-  <header class="sticky top-0 z-40 bg-white border-b border-gray200 px-4 py-3 shadow-sm">
+  <!-- Sidebar Menu -->
+  <div id="sidebar" class="sidebar fixed top-0 left-0 h-full w-[260px] bg-white border-r border-gray200 z-50 shadow-lg p-4">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-bold text-lg">Menu</h3>
+      <button onclick="toggleSidebar()" class="text-xl">×</button>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-4">
+      <input type="text" id="searchInput" placeholder="Search messages..." 
+             class="w-full px-3 py-2 border border-gray200 rounded-lg text-sm">
+    </div>
+    <button onclick="searchChat()" class="w-full bg-black text-white py-2 rounded-lg text-sm mb-6">
+      <i class="fa fa-search mr-2"></i> Search
+    </button>
+
+    <!-- New Chat -->
+    <button onclick="newChat()" class="w-full bg-gray100 hover:bg-gray200 text-black py-2 rounded-lg text-sm mb-4">
+      <i class="fa fa-plus mr-2"></i> New Chat
+    </button>
+
+    <div class="mt-auto text-xs text-gray600 absolute bottom-4 left-0 right-0 text-center">
+      CodeLab AI © 2026
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
+
+  <header class="sticky top-0 z-30 bg-white border-b border-gray200 px-4 py-3 shadow-sm">
     <div class="container mx-auto flex items-center justify-between">
-      <button class="text-black hover:text-gray600 transition-colors mr-2">
+      <button id="burgerBtn" onclick="toggleSidebar()" class="text-black hover:text-gray600 transition-colors mr-2">
         <i class="fa fa-bars text-lg"></i>
       </button>
 
@@ -51,7 +82,7 @@
         </div>
         <div>
           <h1 class="font-semibold text-sm">CodeLab AI</h1>
-          <p class="text-[10px] text-gray600">Online • Coding Assistant</p>
+          <p class="text-[10px] text-gray600">Online • Friendly Assistant</p>
         </div>
       </div>
 
@@ -82,11 +113,12 @@
         </div>
         <div class="flex justify-start mb-3">
           <div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200">
-            <p class="text-sm">Hi! Send me any coding question or upload an image 🚀</p>
+            <p class="text-sm">Hi there! 😊 I'm CodeLab AI — I can help with coding, homework, advice, or just chat! What do you want to talk about?</p>
           </div>
         </div>
       </div>
 
+      <!-- RATING BOX WITH SEND BUTTON -->
       <div id="ratingBox" class="mb-4 p-3 bg-gray100 rounded-xl text-center hidden">
         <p class="text-sm font-medium mb-2">Rate your experience:</p>
         <div class="flex justify-center gap-1 mb-2">
@@ -97,10 +129,12 @@
           <i class="fa fa-star star text-gray300 text-lg" data-rating="5"></i>
         </div>
         <textarea id="ratingComment" placeholder="Add comment (optional)..." class="w-full p-2 text-xs border border-gray200 rounded-lg bg-white mb-2"></textarea>
-        <button onclick="submitRating()" class="bg-black text-white px-3 py-1 rounded-lg text-xs">Send Rating</button>
+        <button onclick="submitRating()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium">
+          ✅ Send Rating
+        </button>
       </div>
 
-      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray200 px-3 py-3 z-30">
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray200 px-3 py-3 z-20">
         <div class="container mx-auto max-w-2xl flex items-end gap-2">
           
           <label for="imageInput" class="cursor-pointer text-gray600 hover:text-black mb-1">
@@ -126,7 +160,7 @@
   </main>
 
   <script>
-    const ADMIN_EMAIL = "safeshellez2@gmail.com"; // ✅ ONLY FOR RATINGS
+    const ADMIN_EMAIL = "safeshellez2@gmail.com";
     const APPEAL_LINK = "https://codelabx.app.railway/appeal";
     const GROQ_MODEL = "llama-3.1-8b-instant";
 
@@ -138,6 +172,8 @@
     const sendBtn = document.getElementById('sendBtn');
     const blockNotice = document.getElementById('blockNotice');
     const normalContent = document.getElementById('normalContent');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
 
     const MAX_WARNINGS = 5;
     const prohibited = ["scam", "phishing", "fake", "steal", "hack", "fraud", "carding", "credit card", "illegal", "malware", "virus", "exploit", "cheat", "clone", "fake bank"];
@@ -164,12 +200,48 @@
       showRatingBox();
     };
 
+    // ✅ BURGER MENU FUNCTION
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('hidden');
+    }
+
+    // ✅ NEW CHAT
+    function newChat() {
+      if (confirm("Start new chat? Old messages will be cleared.")) {
+        chatHistory.innerHTML = `
+          <div class="flex justify-center my-6"><span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span></div>
+          <div class="flex justify-start mb-3"><div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200"><p class="text-sm">Hi there! 😊 I'm CodeLab AI — I can help with coding, homework, advice, or just chat! What do you want to talk about?</p></div></div>
+        `;
+        localStorage.removeItem(`chat_${currentUser.id}`);
+        toggleSidebar();
+      }
+    }
+
+    // ✅ SEARCH CHAT
+    function searchChat() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!term) return alert("Type something to search!");
+      const messages = chatHistory.querySelectorAll('.chat-bubble p');
+      let found = false;
+      messages.forEach(el => {
+        if (el.textContent.toLowerCase().includes(term)) {
+          el.parentElement.style.border = "2px solid red";
+          found = true;
+        } else {
+          el.parentElement.style.border = "";
+        }
+      });
+      if (!found) alert("Not found!");
+      toggleSidebar();
+    }
+
     function attachEvents() {
       sendBtn.addEventListener('click', sendMessage);
       userInput.addEventListener('keydown', e => e.key === 'Enter' && sendMessage());
     }
 
-    // ⭐ RATING → TO YOU
+    // ⭐ RATING WITH SEND BUTTON
     function setupStars() {
       document.querySelectorAll('.star').forEach(star => {
         star.addEventListener('mouseover', () => {
@@ -191,6 +263,7 @@
     }
     function showRatingBox() { document.getElementById('ratingBox').classList.remove('hidden'); }
     function submitRating() {
+      if (userRating === 0) return alert("Please click stars first!");
       const comment = document.getElementById('ratingComment').value.trim() || "No comment";
       fetch("/api/send-email", {
         method: "POST",
@@ -203,8 +276,10 @@
           rating: userRating + "/5",
           comment: comment
         })
-      }).then(() => alert("✅ Thank you! Sent to admin"));
-      document.getElementById('ratingBox').innerHTML = "<p class='text-xs text-center font-medium'>✅ Sent</p>";
+      }).then(() => {
+        alert("✅ Sent! Thank you");
+        document.getElementById('ratingBox').innerHTML = "<p class='text-xs text-center font-medium'>✅ Rating submitted</p>";
+      });
     }
 
     // 📸 IMAGE UPLOAD
@@ -233,26 +308,27 @@
       userInput.value = '';
       if (selectedImageBase64) removeImage();
 
-      if (isBadRequest(text)) return addMessage("⚠️ Request not allowed.", false);
+      if (isBadRequest(text)) return addMessage("⚠️ Sorry, I can't help with that.", false);
 
-      addMessage("Typing...", false);
+      addMessage("Typing... ✨", false);
 
       try {
+        // ✅ AI NOW FRIENDLY — ANSWERS ANYTHING
         const res = await fetch("/api/ai", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `You are CodeLab AI. Answer ONLY coding/tech questions. Write clean full code in \`\`\`blocks. Safe only. NO emojis. Question: ${text}`,
+            prompt: `You are CodeLab AI, a friendly, helpful assistant. Answer ANY question — coding, school, advice, stories, or just chat. Be nice, use emojis sometimes, keep it natural. If code needed, put in \`\`\` blocks. User said: ${text}`,
             model: GROQ_MODEL
           })
         });
         const data = await res.json();
         removeLastMessage();
         if (data.reply) addMessage(data.reply, false);
-        else addMessage("❌ Error connecting.", false);
+        else addMessage("❌ Oops, error! Try again.", false);
       } catch (err) {
         removeLastMessage();
-        addMessage("❌ Network error.", false);
+        addMessage("❌ No connection.", false);
       }
     }
 
@@ -326,7 +402,6 @@
             })
           });
 
-          // ✅ BLOCK LOG → ONLY TO WEBHOOK
           sendLog("❌ BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}\nAppeal: ${APPEAL_LINK}`, 0);
           
           showBlockedNotice();
@@ -352,7 +427,7 @@
       normalContent.classList.add('hidden');
     }
 
-    // ✅ SEND LOG → GOES THROUGH SERVER (webhook URL hidden)
+    // ✅ LOG → TO WEBHOOK
     function sendLog(title, desc, color) {
       fetch("/api/log", {
         method: "POST",
@@ -370,5 +445,4 @@
     function loadSavedChat() { const s = localStorage.getItem(`chat_${currentUser.id}`); if (s) chatHistory.innerHTML = s; }
   </script>
 </body>
-  </html>
-  
+</html>
