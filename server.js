@@ -1,14 +1,15 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 8080;
-const GROQ_API_KEY = process.env.GROQ_API_KEY; // ✅ READS SECRET FROM RAILWAY
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+// ✅ STORE BLOCKED USERS (saved in memory; will keep until restart — can add database later)
+let blockedUsers = [];
 
 app.use(express.json());
 app.use(express.static("."));
 
-app.use(express.urlencoded({ extended: true }));
-
-// ✅ SECURE API ENDPOINT — KEY NEVER EXPOSED
+// AI CHAT ENDPOINT
 app.post("/api/ai", async (req, res) => {
   try {
     const { prompt, model } = req.body;
@@ -35,4 +36,24 @@ app.post("/api/ai", async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Running on port ${port}`));
+// ✅ ADD BLOCKED USER
+app.post("/api/block-user", (req, res) => {
+  const user = req.body;
+  blockedUsers = blockedUsers.filter(u => u.id !== user.id);
+  blockedUsers.push(user);
+  res.json({ok: true});
+});
+
+// ✅ GET ALL BLOCKED USERS
+app.get("/api/get-blocked", (req, res) => {
+  res.json(blockedUsers);
+});
+
+// ✅ UNBLOCK USER
+app.post("/api/unblock-user", (req, res) => {
+  const {id} = req.body;
+  blockedUsers = blockedUsers.filter(u => u.id !== id);
+  res.json({ok: true});
+});
+
+app.listen(port, () => console.log(`✅ Running on port ${port} | Secret: /secret-dashboard-jojo67`));
