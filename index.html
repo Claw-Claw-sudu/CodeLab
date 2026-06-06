@@ -37,14 +37,14 @@
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
-  <!-- DEPLOY BUTTON - ALWAYS VISIBLE TOP RIGHT -->
+  <!-- DEPLOY BUTTON - ALWAYS VISIBLE & WORKING -->
   <div class="fixed top-4 right-4 z-[60]">
     <button id="deployBtn" onclick="deployAction()" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg">
       Deploy
     </button>
   </div>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN SCREEN - ALWAYS SHOWS YOUR CLIENT ID -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
     <div class="max-w-md w-full text-center animate-slide-up">
@@ -62,6 +62,7 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
+        <!-- ✅ YOUR EXACT CLIENT ID ALWAYS HERE -->
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -139,14 +140,15 @@
 
     let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
 
-    // DEPLOY BUTTON LOGIC
+    // ✅ DEPLOY BUTTON LOGIC — ALWAYS SHOWS SIGN-IN WITH YOUR CLIENT ID IF NOT SIGNED IN
     function deployAction() {
       const savedUser = localStorage.getItem('currentUser');
+      
       if (savedUser) {
-        // ALREADY LOGGED IN → GO TO DASHBOARD
+        // ✅ ALREADY SIGNED IN → GO STRAIGHT TO DASHBOARD
         loadExistingSession();
       } else {
-        // NOT LOGGED IN → SHOW SIGN IN
+        // ✅ NOT SIGNED IN → SHOW LOGIN SCREEN WITH YOUR CLIENT ID
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('dashboard').classList.add('hidden');
       }
@@ -156,15 +158,18 @@
       const errBox = document.getElementById('errorBox');
       errBox.classList.remove('hidden');
       if (error.type === 'origin_mismatch') {
-        errBox.textContent = "Error: Add https://x.up.railway.app in Google Cloud → Authorized Origins";
+        errBox.textContent = "ERROR: Add https://x.up.railway.app in Google Cloud → Authorized Origins";
       } else {
-        errBox.textContent = "Error: " + error.type;
+        errBox.textContent = "SIGN IN ERROR: " + error.type;
       }
     }
 
     function loadExistingSession() {
       const savedUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (!savedUser) return;
+      if (!savedUser) {
+        deployAction();
+        return;
+      }
 
       currentUser = savedUser;
       const savedData = localStorage.getItem(`user_${currentUser.id}`);
@@ -216,7 +221,7 @@
         loadSavedChat();
 
       } catch (e) {
-        alert("Sign in error — refresh and try again");
+        alert("Sign in failed — check Google Cloud origins");
       }
     }
 
@@ -273,8 +278,6 @@
       }
       return false;
     }
-
-
 
     async function triggerBlock() {
       sendBtn.disabled = true;
