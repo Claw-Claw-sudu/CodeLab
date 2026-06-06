@@ -6,12 +6,7 @@
   <title>CodeLab | Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
-    (function(){
-      emailjs.init("service_at9zrxl");
-    })();
-
     tailwind.config = {
       theme: {
         extend: {
@@ -73,7 +68,6 @@
       <h2 class="text-sm font-bold text-black mb-1">❌ ACCOUNT BLOCKED</h2>
       <p class="text-xs text-gray600 mb-2">You have been blocked. Access disabled.</p>
       
-      <!-- ✅ APPEAL FORM → SENDS TO WEBHOOK -->
       <div class="mt-3 p-2 bg-white rounded-lg border border-gray200">
         <p class="text-xs font-medium mb-2">Submit Appeal:</p>
         <textarea id="appealReason" placeholder="Why should we unblock you?" class="w-full p-2 text-xs border border-gray200 rounded mb-2"></textarea>
@@ -132,10 +126,9 @@
   </main>
 
   <script>
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
-    const GROQ_MODEL = "llama-3.1-8b-instant";
-    const YOUR_EMAIL = "safeshellez2@gmail.com";
+    const ADMIN_EMAIL = "safeshellez2@gmail.com"; // ✅ ONLY FOR RATINGS
     const APPEAL_LINK = "https://codelabx.app.railway/appeal";
+    const GROQ_MODEL = "llama-3.1-8b-instant";
 
     let currentUser = null;
     let selectedImageBase64 = null;
@@ -167,7 +160,7 @@
       loadSavedChat();
       attachEvents();
       setupStars();
-      sendWebhook("✅ NEW USER", `Name: ${currentUser.name}\nEmail: ${currentUser.email}`, 0);
+      sendLog("✅ NEW USER", `Name: ${currentUser.name}\nEmail: ${currentUser.email}`, 0);
       showRatingBox();
     };
 
@@ -176,7 +169,7 @@
       userInput.addEventListener('keydown', e => e.key === 'Enter' && sendMessage());
     }
 
-    // ⭐ RATING SYSTEM
+    // ⭐ RATING → TO YOU
     function setupStars() {
       document.querySelectorAll('.star').forEach(star => {
         star.addEventListener('mouseover', () => {
@@ -199,14 +192,19 @@
     function showRatingBox() { document.getElementById('ratingBox').classList.remove('hidden'); }
     function submitRating() {
       const comment = document.getElementById('ratingComment').value.trim() || "No comment";
-      emailjs.send("service_xxxxxx", "template_rating", {
-        to_email: YOUR_EMAIL,
-        user_name: currentUser.name,
-        user_email: currentUser.email,
-        rating: userRating + "/5",
-        comment: comment
-      }).then(() => alert("✅ Thank you! Rating sent to safeshellez2@gmail.com"));
-      document.getElementById('ratingBox').innerHTML = "<p class='text-xs text-center font-medium'>✅ Rating submitted</p>";
+      fetch("/api/send-email", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          type: "rating",
+          to: ADMIN_EMAIL,
+          name: currentUser.name,
+          email: currentUser.email,
+          rating: userRating + "/5",
+          comment: comment
+        })
+      }).then(() => alert("✅ Thank you! Sent to admin"));
+      document.getElementById('ratingBox').innerHTML = "<p class='text-xs text-center font-medium'>✅ Sent</p>";
     }
 
     // 📸 IMAGE UPLOAD
@@ -302,28 +300,35 @@
         userData.warnings++;
         userData.faults.push(`#${userData.warnings}: ${text}`);
         saveData();
-        sendWebhook("⚠️ WARNING", `User: ${currentUser.name}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nMsg: ${text}`, 0);
+        sendLog("⚠️ WARNING", `User: ${currentUser.name}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nMsg: ${text}`, 0);
 
         if (userData.warnings >= MAX_WARNINGS) {
           userData.blocked = true;
           saveData();
-          const reason = `Reached ${MAX_WARNINGS} violations\nFaults: ${userData.faults.join(' | ')}`;
+          const reason = `Reached ${MAX_WARNINGS} violations | Faults: ${userData.faults.join(' | ')}`;
           
-          // ✅ SAVE TO SERVER BLOCK LIST
           fetch("/api/block-user", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({id: currentUser.id, name: currentUser.name, email: currentUser.email, reason})
           });
 
-          emailjs.send("service_xxxxxx", "template_blocked", {
-            to_email: currentUser.email,
-            user_name: currentUser.name,
-            reason: reason,
-            appeal_link: APPEAL_LINK
+          // ✅ EMAIL TO USER ONLY
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              type: "blocked",
+              to: currentUser.email,
+              name: currentUser.name,
+              reason: reason,
+              appeal_link: APPEAL_LINK
+            })
           });
 
-          sendWebhook("❌ BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}\nAppeal: ${APPEAL_LINK}`, 0);
+          // ✅ BLOCK LOG → ONLY TO WEBHOOK
+          sendLog("❌ BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}\nAppeal: ${APPEAL_LINK}`, 0);
+          
           showBlockedNotice();
           setTimeout(() => signOut(), 3000);
           return true;
@@ -333,11 +338,11 @@
       return false;
     }
 
-    // ✅ SEND APPEAL TO WEBHOOK
+    // ✅ APPEAL → ONLY TO WEBHOOK
     function sendAppeal() {
       const reason = document.getElementById('appealReason').value.trim();
       if (!reason) return alert("Please write your reason first!");
-      sendWebhook("📨 NEW APPEAL", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}`, 0);
+      sendLog("📨 NEW APPEAL", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}`, 0);
       alert("✅ Appeal sent! We will review it.");
       document.getElementById('appealReason').value = "";
     }
@@ -347,11 +352,12 @@
       normalContent.classList.add('hidden');
     }
 
-    function sendWebhook(title, desc, color) {
-      fetch(WEBHOOK_URL, {
+    // ✅ SEND LOG → GOES THROUGH SERVER (webhook URL hidden)
+    function sendLog(title, desc, color) {
+      fetch("/api/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ embeds: [{ title, description: desc, color, timestamp: new Date().toISOString() }] })
+        body: JSON.stringify({ title, desc, color })
       }).catch(() => {});
     }
 
