@@ -37,14 +37,14 @@
 </head>
 <body class="bg-black text-white font-sans min-h-screen antialiased selection:bg-white selection:text-black">
 
-  <!-- DEPLOY BUTTON - TOP RIGHT, ALWAYS WORKING -->
+  <!-- DEPLOY BUTTON - TOP RIGHT -->
   <div class="fixed top-4 right-4 z-[60]">
     <button id="deployBtn" onclick="deployAction()" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-lg">
       Deploy
     </button>
   </div>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN SCREEN - https://codelabx.up.railway.app/ -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-4 animate-fade-in">
     <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_0px,_transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
     <div class="max-w-md w-full text-center animate-slide-up">
@@ -62,7 +62,7 @@
 
         <div id="errorBox" class="hidden bg-danger/20 text-danger p-3 rounded-lg mb-4 text-sm"></div>
 
-        <!-- YOUR EXACT CLIENT ID HERE -->
+        <!-- YOUR CLIENT ID -->
         <div id="g_id_onload"
              data-client_id="833670070525-h2cvls75g3jjkcpe9c1cat3f6g3afs8l.apps.googleusercontent.com"
              data-callback="handleGoogleSignIn"
@@ -75,7 +75,7 @@
     </div>
   </div>
 
-  <!-- ✅ FULL WORKING DASHBOARD HERE -->
+  <!-- DASHBOARD - https://codelabx.up.railway.app/dashboard -->
   <div id="dashboard" class="hidden animate-fade-in">
     <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
       <div class="container mx-auto flex items-center justify-between">
@@ -128,7 +128,7 @@
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // YOUR EXACT WEBHOOK
+    // YOUR WEBHOOK
     eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
 
     const MAX_WARNINGS = 5;
@@ -140,15 +140,35 @@
 
     let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
 
-    // ✅ DEPLOY BUTTON LOGIC — NOW PERFECT
+    // ✅ CHECK IF ON DASHBOARD URL — BLOCK IF NOT SIGNED IN
+    window.onload = function() {
+      const path = window.location.pathname;
+      const savedUser = localStorage.getItem('currentUser');
+
+      // If trying to go to /dashboard without login → send back to main
+      if (path === '/dashboard' && !savedUser) {
+        window.location.href = '/';
+        return;
+      }
+
+      // If already logged in and go to main → send to dashboard
+      if (path === '/' && savedUser) {
+        loadExistingSession();
+        return;
+      }
+
+      // If logged in and on /dashboard → load it
+      if (path === '/dashboard' && savedUser) {
+        loadExistingSession();
+      }
+    };
+
+    // ✅ DEPLOY BUTTON → GO TO /dashboard IF LOGGED IN, ELSE LOGIN
     function deployAction() {
       const savedUser = localStorage.getItem('currentUser');
-      
       if (savedUser) {
-        // ✅ ALREADY SIGNED IN → GO STRAIGHT TO DASHBOARD
-        loadExistingSession();
+        window.location.href = '/dashboard';
       } else {
-        // ✅ NOT SIGNED IN → SHOW LOGIN WITH YOUR CLIENT ID
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('dashboard').classList.add('hidden');
       }
@@ -158,7 +178,7 @@
       const errBox = document.getElementById('errorBox');
       errBox.classList.remove('hidden');
       if (error.type === 'origin_mismatch') {
-        errBox.textContent = "ERROR: Add https://x.up.railway.app in Google Cloud → Authorized Origins";
+        errBox.textContent = "ERROR: Add https://codelabx.up.railway.app in Google Cloud → Authorized Origins";
       } else {
         errBox.textContent = "SIGN IN ERROR: " + error.type;
       }
@@ -167,7 +187,7 @@
     function loadExistingSession() {
       const savedUser = JSON.parse(localStorage.getItem('currentUser'));
       if (!savedUser) {
-        deployAction();
+        window.location.href = '/';
         return;
       }
 
@@ -187,11 +207,15 @@
         return;
       }
 
-      // ✅ SHOW DASHBOARD NOW
       document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
       loadSavedChat();
+
+      // Update URL to /dashboard
+      if (window.location.pathname !== '/dashboard') {
+        window.history.pushState({}, '', '/dashboard');
+      }
     }
 
     function handleGoogleSignIn(response) {
@@ -216,11 +240,8 @@
           return;
         }
 
-        // ✅ AFTER SIGN IN → GO TO DASHBOARD
-        document.getElementById('userName').textContent = currentUser.name;
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        loadSavedChat();
+        // After sign in → go to dashboard URL
+        window.location.href = '/dashboard';
 
       } catch (e) {
         alert("Sign in failed — check Google Cloud origins");
@@ -230,8 +251,7 @@
     function signOut() {
       currentUser = null;
       localStorage.removeItem('currentUser');
-      document.getElementById('dashboard').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
+      window.location.href = '/';
     }
 
     function addMessage(text, isUser = false) {
@@ -344,4 +364,5 @@ Scams, hacks, or illegal content = BLOCKED.`;
     function loadSavedChat() { if (!currentUser) return; const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
   </script>
 </body>
-</html>
+          </html>
+  
