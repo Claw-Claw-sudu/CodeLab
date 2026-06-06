@@ -2,22 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeLab | Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CodeLab | Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
+    (function(){
+      emailjs.init("YOUR_PUBLIC_KEY");
+    })();
+
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             black: '#000000',
-            white: '#FFFFFF',
-            neutral: { 100: '#f5f5f5', 200: '#e5e5e5', 800: '#1a1a1a', 900: '#0a0a0a' },
-            danger: '#dc2626',
-            success: '#16a34a'
+            white: '#ffffff',
+            gray100: '#f5f5f5',
+            gray200: '#e5e5e5',
+            gray300: '#d4d4d4',
+            gray600: '#525252',
+            gray800: '#262626',
+            danger: '#000000'
           },
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'Consolas', 'monospace'] }
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
         }
       }
     }
@@ -26,54 +34,97 @@
     @layer utilities {
       .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       .scrollbar-hide::-webkit-scrollbar { display: none; }
-      .code-block { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin: 8px 0; font-family: monospace; white-space: pre-wrap; overflow-x: auto; }
+      .chat-bubble { max-width: 78%; width: fit-content; line-height: 1.5; }
+      @media (max-width: 640px) { .chat-bubble { max-width: 88%; } }
+      .code-block { background: #1a1a1a; color: #ffffff; border-radius: 0.5rem; padding: 0.75rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; border: 1px solid #333; }
+      .star { cursor: pointer; transition: all 0.2s; }
+      .star.active { color: #000; }
     }
   </style>
 </head>
-<body class="bg-black text-white font-sans min-h-screen antialiased">
+<body class="bg-white text-black font-sans min-h-screen antialiased">
 
-  <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
+  <header class="sticky top-0 z-40 bg-white border-b border-gray200 px-4 py-3 shadow-sm">
     <div class="container mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <i class="fa fa-robot text-white text-xl"></i>
-        <h1 class="text-lg font-semibold tracking-wide">CodeLab AI Helper</h1>
+      <button class="text-black hover:text-gray600 transition-colors mr-2">
+        <i class="fa fa-bars text-lg"></i>
+      </button>
+
+      <div class="flex items-center gap-3 flex-1">
+        <div class="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white">
+          <i class="fa fa-robot"></i>
+        </div>
+        <div>
+          <h1 class="font-semibold text-sm">CodeLab AI</h1>
+          <p class="text-[10px] text-gray600">Online • Coding Assistant</p>
+        </div>
       </div>
-      <div class="flex items-center gap-4">
-        <span id="userName" class="text-sm text-neutral-300"></span>
-        <button onclick="signOut()" class="text-sm text-neutral-400 hover:text-white transition-colors">Sign Out</button>
+
+      <div class="flex items-center gap-3">
+        <span id="userName" class="text-xs text-gray600 truncate max-w-[90px]"></span>
+        <button onclick="signOut()" class="text-xs text-black hover:text-gray600">Sign Out</button>
       </div>
     </div>
   </header>
 
-  <main class="container mx-auto px-4 py-6">
-    <!-- ✅ BLOCK NOTICE (ONLY INSIDE DASHBOARD) -->
-    <div id="blockNotice" class="hidden mb-6 p-4 bg-danger/20 border border-danger rounded-xl text-center">
-      <h2 class="text-xl font-bold text-danger mb-1">ACCOUNT BLOCKED</h2>
-      <p class="text-sm text-neutral-300">You have been blocked due to multiple violations.<br>Access to AI features is disabled.</p>
+  <main class="container mx-auto px-3 py-3 max-w-2xl">
+    <!-- Block Notice + APPEAL FORM -->
+    <div id="blockNotice" class="hidden mb-4 p-3 bg-gray100 border border-black rounded-xl text-center">
+      <h2 class="text-sm font-bold text-black mb-1">❌ ACCOUNT BLOCKED</h2>
+      <p class="text-xs text-gray600 mb-2">You have been blocked. Access disabled.</p>
+      
+      <!-- ✅ APPEAL FORM → SENDS TO WEBHOOK -->
+      <div class="mt-3 p-2 bg-white rounded-lg border border-gray200">
+        <p class="text-xs font-medium mb-2">Submit Appeal:</p>
+        <textarea id="appealReason" placeholder="Why should we unblock you?" class="w-full p-2 text-xs border border-gray200 rounded mb-2"></textarea>
+        <button onclick="sendAppeal()" class="bg-black text-white px-3 py-1 rounded text-xs">Send Appeal</button>
+      </div>
     </div>
 
     <div id="normalContent">
-      <div class="mb-6 text-center">
-        <div class="inline-block bg-success/20 text-success px-3 py-1 rounded-full text-xs font-medium mb-2">Safe & Compliant</div>
-        <h2 class="text-3xl font-bold mb-2">AI Coding Assistant</h2>
-        <p class="text-neutral-400 text-sm">Ask me anything about coding — safe & educational only</p>
-      </div>
-
-      <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl mb-8">
-        <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
-          <div class="text-neutral-400 text-center py-10">
-            <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
-            <p>Type any coding question below — I will write full working code for you!</p>
-            <p class="text-xs mt-2 text-success">All requests filtered — safe, legal, educational only</p>
-            <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
+      <div id="chatHistory" class="h-[calc(100vh-180px)] overflow-y-auto scrollbar-hide mb-4 space-y-4 py-2 px-1">
+        <div class="flex justify-center my-6">
+          <span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span>
+        </div>
+        <div class="flex justify-start mb-3">
+          <div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200">
+            <p class="text-sm">Hi! Send me any coding question or upload an image 🚀</p>
           </div>
         </div>
+      </div>
 
-        <div class="flex gap-3">
-          <input id="userInput" type="text" placeholder="Ask me anything..." 
-                 class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
-          <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all cursor-pointer">
-            Send
+      <div id="ratingBox" class="mb-4 p-3 bg-gray100 rounded-xl text-center hidden">
+        <p class="text-sm font-medium mb-2">Rate your experience:</p>
+        <div class="flex justify-center gap-1 mb-2">
+          <i class="fa fa-star star text-gray300 text-lg" data-rating="1"></i>
+          <i class="fa fa-star star text-gray300 text-lg" data-rating="2"></i>
+          <i class="fa fa-star star text-gray300 text-lg" data-rating="3"></i>
+          <i class="fa fa-star star text-gray300 text-lg" data-rating="4"></i>
+          <i class="fa fa-star star text-gray300 text-lg" data-rating="5"></i>
+        </div>
+        <textarea id="ratingComment" placeholder="Add comment (optional)..." class="w-full p-2 text-xs border border-gray200 rounded-lg bg-white mb-2"></textarea>
+        <button onclick="submitRating()" class="bg-black text-white px-3 py-1 rounded-lg text-xs">Send Rating</button>
+      </div>
+
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray200 px-3 py-3 z-30">
+        <div class="container mx-auto max-w-2xl flex items-end gap-2">
+          
+          <label for="imageInput" class="cursor-pointer text-gray600 hover:text-black mb-1">
+            <i class="fa fa-paperclip text-lg"></i>
+          </label>
+          <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+
+          <div class="flex-1 relative">
+            <input id="userInput" type="text" placeholder="Type your message..." 
+                   class="w-full bg-gray100 border border-gray200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-black">
+            <div id="imagePreview" class="hidden absolute bottom-full left-0 mb-2 p-2 bg-white rounded-lg shadow-md border border-gray200">
+              <img id="previewImg" class="w-20 h-20 object-cover rounded" />
+              <button onclick="removeImage()" class="absolute -top-2 -right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center text-xs">×</button>
+            </div>
+          </div>
+
+          <button id="sendBtn" class="bg-black hover:bg-gray800 text-white rounded-full w-9 h-9 flex items-center justify-center transition-all">
+            <i class="fa fa-paper-plane"></i>
           </button>
         </div>
       </div>
@@ -83,8 +134,12 @@
   <script>
     const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
     const GROQ_MODEL = "llama-3.1-8b-instant";
+    const YOUR_EMAIL = "safeshellez2@gmail.com";
+    const APPEAL_LINK = "https://codelabx.app.railway/appeal";
 
     let currentUser = null;
+    let selectedImageBase64 = null;
+    let userRating = 0;
     const chatHistory = document.getElementById('chatHistory');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -92,11 +147,7 @@
     const normalContent = document.getElementById('normalContent');
 
     const MAX_WARNINGS = 5;
-    const prohibited = [
-      "scam", "phishing", "fake", "steal", "hack", "fraud", "carding", "credit card",
-      "illegal", "malware", "virus", "exploit", "cheat", "clone", "fake bank"
-    ];
-
+    const prohibited = ["scam", "phishing", "fake", "steal", "hack", "fraud", "carding", "credit card", "illegal", "malware", "virus", "exploit", "cheat", "clone", "fake bank"];
     let userData = { warnings: 0, blocked: false, faults: [] };
 
     window.onload = function() {
@@ -105,11 +156,9 @@
       currentUser = JSON.parse(savedUser);
       document.getElementById('userName').textContent = currentUser.name;
 
-      // Load user data
       const saved = localStorage.getItem(`user_${currentUser.id}`);
       if (saved) userData = JSON.parse(saved);
 
-      // ✅ IF ALREADY BLOCKED → SHOW NOTICE + HIDE CHAT
       if (userData.blocked) {
         showBlockedNotice();
         return;
@@ -117,9 +166,9 @@
 
       loadSavedChat();
       attachEvents();
-
-      // ✅ SEND LOGIN TO WEBHOOK
-      sendDiscord("NEW USER LOGGED IN", `Name: ${currentUser.name}\nEmail: ${currentUser.email}\nID: ${currentUser.id}`, 14423076);
+      setupStars();
+      sendWebhook("✅ NEW USER", `Name: ${currentUser.name}\nEmail: ${currentUser.email}`, 0);
+      showRatingBox();
     };
 
     function attachEvents() {
@@ -127,54 +176,114 @@
       userInput.addEventListener('keydown', e => e.key === 'Enter' && sendMessage());
     }
 
+    // ⭐ RATING SYSTEM
+    function setupStars() {
+      document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('mouseover', () => {
+          const rating = parseInt(star.dataset.rating);
+          highlightStars(rating);
+        });
+        star.addEventListener('click', () => {
+          userRating = parseInt(star.dataset.rating);
+          highlightStars(userRating);
+        });
+      });
+      document.querySelector('#ratingBox').addEventListener('mouseleave', () => highlightStars(userRating));
+    }
+    function highlightStars(rating) {
+      document.querySelectorAll('.star').forEach((s,i) => {
+        s.classList.toggle('active', i < rating);
+        s.classList.toggle('text-gray300', i >= rating);
+      });
+    }
+    function showRatingBox() { document.getElementById('ratingBox').classList.remove('hidden'); }
+    function submitRating() {
+      const comment = document.getElementById('ratingComment').value.trim() || "No comment";
+      emailjs.send("service_xxxxxx", "template_rating", {
+        to_email: YOUR_EMAIL,
+        user_name: currentUser.name,
+        user_email: currentUser.email,
+        rating: userRating + "/5",
+        comment: comment
+      }).then(() => alert("✅ Thank you! Rating sent to safeshellez2@gmail.com"));
+      document.getElementById('ratingBox').innerHTML = "<p class='text-xs text-center font-medium'>✅ Rating submitted</p>";
+    }
+
+    // 📸 IMAGE UPLOAD
+    function handleImageSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        selectedImageBase64 = ev.target.result;
+        document.getElementById('previewImg').src = selectedImageBase64;
+        document.getElementById('imagePreview').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+    function removeImage() {
+      selectedImageBase64 = null;
+      document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('imageInput').value = "";
+    }
+
     async function sendMessage() {
       const text = userInput.value.trim();
-      if (!text || userData.blocked) return;
+      if (!text && !selectedImageBase64 || userData.blocked) return;
 
-      addMessage(text, true);
+      addMessage(text, true, selectedImageBase64);
       userInput.value = '';
+      if (selectedImageBase64) removeImage();
 
-      if (isBadRequest(text)) return addMessage("Request blocked — violates rules.");
+      if (isBadRequest(text)) return addMessage("⚠️ Request not allowed.", false);
 
-      addMessage("Thinking...");
+      addMessage("Typing...", false);
+
       try {
         const res = await fetch("/api/ai", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `You are CodeLab AI, coding assistant. Answer only coding questions, write full code, safe, no emojis. Question: ${text}`,
+            prompt: `You are CodeLab AI. Answer ONLY coding/tech questions. Write clean full code in \`\`\`blocks. Safe only. NO emojis. Question: ${text}`,
             model: GROQ_MODEL
           })
         });
         const data = await res.json();
         removeLastMessage();
-        if (data.reply) addMessage(data.reply);
-        else addMessage("Error: Could not get reply.");
+        if (data.reply) addMessage(data.reply, false);
+        else addMessage("❌ Error connecting.", false);
       } catch (err) {
         removeLastMessage();
-        addMessage("Error: Could not connect.");
+        addMessage("❌ Network error.", false);
       }
     }
 
-    function signOut() {
-      localStorage.removeItem('currentUser');
-      window.location.href = '/index.html';
-    }
-
-    function addMessage(text, isUser = false) {
+    function addMessage(text, isUser = false, image = null) {
       const div = document.createElement('div');
-      div.className = "max-w-[85%] p-4 rounded-xl " + (isUser ? "bg-white text-black ml-auto" : "bg-neutral-800 text-white mr-auto");
+      div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`;
 
-      if (text.includes('```')) {
-        const parts = text.split('```');
-        let html = '';
-        for (let i = 0; i < parts.length; i++) {
-          html += (i % 2 === 1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g, '<br>');
-        }
-        div.innerHTML = html;
-      } else {
-        div.innerHTML = text.replace(/\n/g, '<br>');
+      let content = '';
+      if (image) {
+        content += `<img src="${image}" class="max-w-[160px] max-h-[160px] rounded-xl mb-2 border border-gray200" />`;
       }
+      if (text) {
+        if (text.includes('```')) {
+          const parts = text.split('```');
+          let html = '';
+          for (let i = 0; i < parts.length; i++) {
+            html += (i % 2 === 1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g, '<br>');
+          }
+          content += html;
+        } else {
+          content += text.replace(/\n/g, '<br>');
+        }
+      }
+
+      div.innerHTML = `
+        <div class="chat-bubble ${isUser ? 'bg-black text-white rounded-tl-2xl rounded-bl-2xl rounded-tr-md' : 'bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md'} p-3 border border-gray200">
+          <p class="text-sm">${content}</p>
+        </div>
+      `;
 
       chatHistory.appendChild(div);
       chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -193,17 +302,28 @@
         userData.warnings++;
         userData.faults.push(`#${userData.warnings}: ${text}`);
         saveData();
+        sendWebhook("⚠️ WARNING", `User: ${currentUser.name}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nMsg: ${text}`, 0);
 
-        // ✅ SEND WARNING TO WEBHOOK
-        sendDiscord("WARNING", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nRequest: ${text}`, 16753920);
-
-        // ✅ REACHED LIMIT → BLOCK + WEBHOOK
         if (userData.warnings >= MAX_WARNINGS) {
           userData.blocked = true;
           saveData();
-          sendDiscord("USER BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${MAX_WARNINGS} violations\nFaults:\n${userData.faults.join('\n')}`, 14427618);
+          const reason = `Reached ${MAX_WARNINGS} violations\nFaults: ${userData.faults.join(' | ')}`;
+          
+          // ✅ SAVE TO SERVER BLOCK LIST
+          fetch("/api/block-user", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id: currentUser.id, name: currentUser.name, email: currentUser.email, reason})
+          });
 
-          // ✅ SHOW NOTICE + AUTO SIGNOUT AFTER 3 SEC
+          emailjs.send("service_xxxxxx", "template_blocked", {
+            to_email: currentUser.email,
+            user_name: currentUser.name,
+            reason: reason,
+            appeal_link: APPEAL_LINK
+          });
+
+          sendWebhook("❌ BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}\nAppeal: ${APPEAL_LINK}`, 0);
           showBlockedNotice();
           setTimeout(() => signOut(), 3000);
           return true;
@@ -213,27 +333,36 @@
       return false;
     }
 
+    // ✅ SEND APPEAL TO WEBHOOK
+    function sendAppeal() {
+      const reason = document.getElementById('appealReason').value.trim();
+      if (!reason) return alert("Please write your reason first!");
+      sendWebhook("📨 NEW APPEAL", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${reason}`, 0);
+      alert("✅ Appeal sent! We will review it.");
+      document.getElementById('appealReason').value = "";
+    }
+
     function showBlockedNotice() {
       blockNotice.classList.remove('hidden');
       normalContent.classList.add('hidden');
     }
 
-    function sendDiscord(title, desc, color) {
+    function sendWebhook(title, desc, color) {
       fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          embeds: [{
-            title, description: desc, color,
-            timestamp: new Date().toISOString()
-          }]
-        })
-      }).catch(() => {}); // prevent error if webhook fails
+        body: JSON.stringify({ embeds: [{ title, description: desc, color, timestamp: new Date().toISOString() }] })
+      }).catch(() => {});
     }
 
+    function signOut() {
+      localStorage.removeItem('currentUser');
+      window.location.href = '/index.html';
+    }
     function saveData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
     function saveChat() { localStorage.setItem(`chat_${currentUser.id}`, chatHistory.innerHTML); }
     function loadSavedChat() { const s = localStorage.getItem(`chat_${currentUser.id}`); if (s) chatHistory.innerHTML = s; }
   </script>
 </body>
-</html>
+  </html>
+  
