@@ -73,10 +73,9 @@
   </main>
 
   <script>
-    // ✅ YOUR SETTINGS — PASTE YOUR KEY HERE EXACTLY (NO SPACES)
+    // ✅ YOUR SETTINGS
     const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
-    const GROQ_API_KEY = "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"; // ← PUT YOUR FULL KEY HERE (STARTS WITH gsk_)
-    const GROQ_MODEL = "llama3-8b-8192"; // ✅ CHANGED TO MOST STABLE MODEL
+    const GROQ_MODEL = "llama-3.1-8b-instant"; // ✅ NEW WORKING MODEL
 
     let currentUser = null;
     const chatHistory = document.getElementById('chatHistory');
@@ -126,7 +125,6 @@
         addMessage(aiReply);
       } catch (err) {
         removeLastMessage();
-        // ✅ SHOW REAL ERROR SO WE KNOW
         addMessage("Error: " + err.message);
       }
     }
@@ -183,7 +181,7 @@
       return false;
     }
 
-    // ✅ FIXED API CALL — NO CORS ISSUE, BETTER ERROR HANDLING
+    // ✅ SECURE: KEY IS HIDDEN IN RAILWAY VARIABLE
     async function getGroqReply(prompt) {
       const systemPrompt = `You are CodeLab AI, a coding assistant.
 - Answer only coding, programming, web development, software questions.
@@ -194,29 +192,17 @@
 - No emojis.
 - Answer: ${prompt}`;
 
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      // ✅ CALL RAILWAY SERVER TO GET KEY SECURELY
+      const res = await fetch("/api/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          messages: [{ role: "user", content: systemPrompt }],
-          temperature: 0.1
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: systemPrompt, model: GROQ_MODEL })
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `HTTP ${res.status} - Invalid Key or Model`);
-      }
-
+      if (!res.ok) throw new Error("API Error");
       const data = await res.json();
-      if (data.choices?.[0]?.message?.content) {
-        return data.choices[0].message.content;
-      }
-      throw new Error("No reply from AI");
+      if (data.reply) return data.reply;
+      throw new Error("No reply");
     }
 
     function sendDiscord(title, desc, color) {
