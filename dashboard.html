@@ -113,7 +113,7 @@
     </button>
 
     <div id="chatsList" class="flex-1 overflow-y-auto scrollbar-hide mb-4">
-      <p class="text-xs text-gray600 text-center py-2">Loading chats...</p>
+      <p class="text-xs text-gray600 text-center py-2">No chats yet</p>
     </div>
 
     <div class="mt-auto text-xs text-gray600 text-center">
@@ -135,7 +135,7 @@
         </div>
         <div>
           <h1 class="font-semibold text-sm">CodeLab AI</h1>
-          <p class="text-[10px] text-gray600">Online • Friendly Assistant</p>
+          <p class="text-[10px] text-gray600">Online • Ready</p>
         </div>
       </div>
 
@@ -160,12 +160,7 @@
     <div id="normalContent">
       <div id="chatHistory" class="h-[calc(100vh-180px)] overflow-y-auto scrollbar-hide mb-4 space-y-4 py-2 px-1">
         <div class="flex justify-center my-6">
-          <span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span>
-        </div>
-        <div class="flex justify-start mb-3">
-          <div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200">
-            <p class="text-sm">Hi there! 😊 I'm CodeLab AI — I can help with coding, homework, advice, or just chat! What do you want to talk about?</p>
-          </div>
+          <span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">New Chat</span>
         </div>
       </div>
 
@@ -205,8 +200,8 @@
         </div>
       </div>
     </div>
-                </main>
-    <script>
+            </main>
+              <script>
     const ADMIN_EMAIL = "safeshellez2@gmail.com";
     const APPEAL_LINK = "https://codelabx.up.railway.app/secret-dashboard-jojo67";
     const GROQ_MODEL = "llama-3.1-8b-instant";
@@ -215,6 +210,7 @@
     let selectedImageBase64 = null;
     let userRating = 0;
     let currentChatId = null;
+    let chatTitleSet = false;
     const chatHistory = document.getElementById('chatHistory');
     const userInput = document.getElementById('userInput');
     const blockNotice = document.getElementById('blockNotice');
@@ -276,6 +272,18 @@
       document.querySelector(`#${id}`).classList.toggle('fullscreen');
     }
 
+    // Auto-generate chat title like Dola
+    function generateChatTitle(message) {
+      const msg = message.toLowerCase().trim();
+      if (/^(hi|hello|hey|whats up)/.test(msg)) return "Casual Greeting";
+      if (/code|html|css|js|javascript|python|program/.test(msg)) return "Coding Help";
+      if (/how to|how do|way to/.test(msg)) return "How-to Question";
+      if (/why|what|when|where|who/.test(msg)) return "General Question";
+      if (/help|assist/.test(msg)) return "Asking for Help";
+      if (/thank|thanks/.test(msg)) return "Gratitude";
+      return msg.length > 20 ? msg.substring(0, 20) + "..." : msg;
+    }
+
     window.onload = async function() {
       const savedUser = localStorage.getItem('currentUser');
       if (!savedUser) return window.location.href = '/index.html';
@@ -294,10 +302,25 @@
         if (saved) userData = JSON.parse(saved);
       }
 
-      if (userData.blocked) { showBlockedNotice(); return; }
+      // Send old blocks to dashboard
+      if (userData.blocked) { 
+        fetch("/api/block-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            blockedAt: "before-dashboard",
+            source: "old-block"
+          })
+        });
+        showBlockedNotice(); 
+        return; 
+      }
 
       loadAllChats();
-      if (!currentChatId) createNewChat();
+      createNewChat();
 
       attachEvents();
       setupStars();
@@ -307,17 +330,19 @@
 
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');
-      document.getElementById('(').classList.toggle('hidden');
+      document.getElementById('overlay').classList.toggle('hidden');
     }
 
     function createNewChat() {
-      const chatId = 'chat_' + Date.now();
-      const newChatHTML = `
-        <div class="flex justify-center my-6"><span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">Today</span></div>
-        <div class="flex justify-start mb-3"><div class="chat-bubble bg-gray100 text-black rounded-tr-2xl rounded-br-2xl rounded-bl-md p-3 border border-gray200"><p class="text-sm">Hi there! 😊 I'm CodeLab AI — I can help with coding, homework, advice, or just chat! What do you want to talk about?</p></div></div>
+      if (currentChatId) saveCurrentChat();
+      currentChatId = 'chat_' + Date.now();
+      chatTitleSet = false;
+      chatHistory.innerHTML = `
+        <div class="flex justify-center my-6">
+          <span class="text-[10px] text-gray600 bg-gray100 px-3 py-1 rounded-full">New Chat</span>
+        </div>
       `;
-      localStorage.setItem(`chat_${currentUser.id}_${chatId}`, newChatHTML);
-      switchChat(chatId);
+      localStorage.setItem(`chat_${currentUser.id}_${currentChatId}`, chatHistory.innerHTML);
       loadAllChats();
       toggleSidebar();
     }
@@ -358,6 +383,7 @@
     function switchChat(chatId) {
       if (currentChatId) saveCurrentChat();
       currentChatId = chatId;
+      chatTitleSet = true;
       const html = localStorage.getItem(`chat_${currentUser.id}_${chatId}`);
       chatHistory.innerHTML = html;
       chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -380,10 +406,10 @@
     function getChatPreview(html) {
       const temp = document.createElement('div');
       temp.innerHTML = html;
-      const texts = temp.querySelectorAll('.chat-bubble p');
-      if (texts.length < 2) return 'New Chat';
-      const last = texts[texts.length-1].textContent.trim();
-      return last.length > 25 ? last.substring(0,22)+'...' : last;
+      const dates = temp.querySelectorAll('.chat-bubble p');
+      if (dates.length < 1) return 'New Chat';
+      const firstMsg = dates[0].textContent.trim();
+      return firstMsg.length > 25 ? firstMsg.substring(0,22)+'...' : firstMsg;
     }
 
     function searchChat() {
@@ -469,11 +495,19 @@
       const text = userInput.value.trim();
       if ((!text && !selectedImageBase64) || userData.blocked) return;
 
+      // Set chat title from your first message
+      if (!chatTitleSet) {
+        const title = generateChatTitle(text);
+        chatHistory.querySelector('span').textContent = title;
+        chatTitleSet = true;
+      }
+
       addMessage(text, true, selectedImageBase64);
       userInput.value = '';
       if (selectedImageBase64) removeImage();
 
       saveCurrentChat();
+      loadAllChats();
 
       if (isBadRequest(text)) return addMessage("⚠️ Sorry, I can't help with that.", false);
 
@@ -558,7 +592,13 @@
       fetch("/api/block-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: currentUser.id, name: currentUser.name, email: currentUser.email })
+        body: JSON.stringify({ 
+          id: currentUser.id, 
+          name: currentUser.name, 
+          email: currentUser.email,
+          blockedAt: new Date().toISOString(),
+          source: "auto-block-system"
+        })
       });
     }
 
@@ -602,5 +642,4 @@
   </script>
 
 </body>
-  </html>
-  
+</html>
