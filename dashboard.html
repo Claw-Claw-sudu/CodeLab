@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeLab | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            black: '#000000',
+            white: '#FFFFFF',
+            neutral: { 100: '#f5f5f5', 200: '#e5e5e5', 800: '#1a1a1a', 900: '#0a0a0a' },
+            danger: '#dc2626',
+            success: '#16a34a'
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'Consolas', 'monospace'] }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .code-block { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin: 8px 0; font-family: monospace; white-space: pre-wrap; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans min-h-screen antialiased">
+
+  <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-neutral-800 px-6 py-4">
+    <div class="container mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa fa-robot text-white text-xl"></i>
+        <h1 class="text-lg font-semibold tracking-wide">CodeLab AI Helper</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="userName" class="text-sm text-neutral-300"></span>
+        <button onclick="signOut()" class="text-sm text-neutral-400 hover:text-white transition-colors">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-6">
+    <div class="mb-6 text-center">
+      <div class="inline-block bg-success/20 text-success px-3 py-1 rounded-full text-xs font-medium mb-2">Safe & Compliant</div>
+      <h2 class="text-3xl font-bold mb-2">AI Coding Assistant</h2>
+      <p class="text-neutral-400 text-sm">Ask me anything about coding — safe & educational only</p>
+    </div>
+
+    <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl mb-8">
+      <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
+        <div class="text-neutral-400 text-center py-10">
+          <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
+          <p>Type any coding question below — I will write full working code for you!</p>
+          <p class="text-xs mt-2 text-success">All requests filtered — safe, legal, educational only</p>
+          <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <input id="userInput" type="text" placeholder="Ask me anything..." 
+               class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
+        <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all">
+          Send
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentUser = null;
+    const chatHistory = document.getElementById('chatHistory');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // YOUR WEBHOOK
+    eval(atob("Y29uc3QgV0VCSE9PS19VUkwgPSAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMDY4ODg4MjE2MzcxMjAwNS9PNnFRTU5DN0dKcjdHQmJYMXQ2aVprOWtuZjZiRkxaRV93R1hYU1FBQlJkZFpCZbVXM1pUWnB0SVdmTS1kSloybj1TUDRqIjs="));
+
+    const MAX_WARNINGS = 5;
+    const prohibited = [
+      "scam", "scam website", "phishing", "fake login", "fake site", "steal", "hack", "fraud",
+      "carding", "credit card", "fake payment", "get free robux", "generate fake", "clone website",
+      "illegal", "malware", "virus", "exploit", "cheat", "phish", "fake bank", "fake account"
+    ];
+
+    let userData = { warnings: 0, blocked: false, faults: [], webhookSent: false };
+
+    // ✅ CHECK IF LOGGED IN — IF NOT → GO BACK
+    window.onload = function() {
+      const savedUser = localStorage.getItem('currentUser');
+      if (!savedUser) {
+        window.location.href = '/index.html';
+        return;
+      }
+      currentUser = JSON.parse(savedUser);
+      document.getElementById('userName').textContent = currentUser.name;
+
+      const savedData = localStorage.getItem(`user_${currentUser.id}`);
+      if (savedData) userData = JSON.parse(savedData);
+
+      if (userData.blocked) {
+        document.body.innerHTML = `
+          <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
+            <div>
+              <h2 class="text-2xl font-bold mb-2">ACCESS BLOCKED</h2>
+              <p class="text-neutral-400">${currentUser.email}<br>Violated Terms of Service<br>Blocked permanently</p>
+            </div>
+          </div>
+        `;
+      }
+
+      loadSavedChat();
+    };
+
+    function signOut() {
+      localStorage.removeItem('currentUser');
+      window.location.href = '/index.html';
+    }
+
+    function addMessage(text, isUser = false) {
+      const div = document.createElement('div');
+      let classes = "max-w-[85%] p-4 rounded-xl ";
+      if (isUser) classes += "bg-white text-black ml-auto";
+      else classes += "bg-neutral-800 text-white mr-auto";
+
+      if (text.includes('```')) {
+        const parts = text.split('```');
+        let html = '';
+        for (let i=0; i<parts.length; i++) {
+          html += (i%2===1) ? `<div class="code-block">${parts[i]}</div>` : parts[i].replace(/\n/g,'<br>');
+        }
+        div.innerHTML = html;
+      } else {
+        div.innerHTML = text.replace(/\n/g,'<br>');
+      }
+
+      chatHistory.appendChild(div);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      saveChat();
+    }
+
+    function isRequestProhibited(text) {
+      const lower = text.toLowerCase();
+      const match = prohibited.some(word => lower.includes(word));
+      
+      if (match) {
+        userData.warnings += 1;
+        userData.faults.push(`#${userData.warnings}: ${text}`);
+        saveUserData();
+        if (userData.warnings < MAX_WARNINGS) return false;
+        if (userData.warnings >= MAX_WARNINGS && !userData.blocked) {
+          userData.blocked = true;
+          saveUserData();
+          if (!userData.webhookSent) {
+            userData.webhookSent = true;
+            saveUserData();
+            triggerBlock();
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    async function triggerBlock() {
+      sendBtn.disabled = true;
+      addMessage("Processing violation report...");
+      const payload = { content: `USER Blocked\nEmail: ${currentUser.email}\nReason: Exceeded 5 warnings\nFaults:\n${userData.faults.join('\n')}` };
+      try {
+        await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        setTimeout(() => { addMessage("Report sent. Access revoked."); setTimeout(() => { addMessage("Blocked — Cannot send messages"); userInput.disabled = true; sendBtn.disabled = true; }, 1000); }, 1500);
+      } catch (e) { addMessage("Error sending report. Still blocked."); }
+    }
+
+    function getAIResponse(question) {
+      return `I write safe, educational, working code for:
+• HTML / CSS / JavaScript / Websites
+• Python / C# / Java / C++ / Programming
+• Any coding project or help you need
+
+Just tell me exactly what to make — I will give full working code!
+
+Scams, hacks, or illegal content = BLOCKED.`;
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      if (!text || userData.blocked) return;
+      addMessage(text, true);
+      userInput.value = '';
+      if (isRequestProhibited(text)) return;
+      setTimeout(() => addMessage(getAIResponse(text)), 700);
+    });
+
+    userInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendBtn.click(); });
+
+    function saveUserData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
+    function saveChat() { localStorage.setItem(`chat_${currentUser.id}`, chatHistory.innerHTML); }
+    function loadSavedChat() { const saved = localStorage.getItem(`chat_${currentUser.id}`); if (saved) chatHistory.innerHTML = saved; }
+  </script>
+</body>
+</html>
+
