@@ -46,41 +46,50 @@
   </header>
 
   <main class="container mx-auto px-4 py-6">
-    <div class="mb-6 text-center">
-      <div class="inline-block bg-success/20 text-success px-3 py-1 rounded-full text-xs font-medium mb-2">Safe & Compliant</div>
-      <h2 class="text-3xl font-bold mb-2">AI Coding Assistant</h2>
-      <p class="text-neutral-400 text-sm">Ask me anything about coding — safe & educational only</p>
+    <!-- ✅ BLOCK NOTICE (ONLY INSIDE DASHBOARD) -->
+    <div id="blockNotice" class="hidden mb-6 p-4 bg-danger/20 border border-danger rounded-xl text-center">
+      <h2 class="text-xl font-bold text-danger mb-1">ACCOUNT BLOCKED</h2>
+      <p class="text-sm text-neutral-300">You have been blocked due to multiple violations.<br>Access to AI features is disabled.</p>
     </div>
 
-    <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl mb-8">
-      <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
-        <div class="text-neutral-400 text-center py-10">
-          <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
-          <p>Type any coding question below — I will write full working code for you!</p>
-          <p class="text-xs mt-2 text-success">All requests filtered — safe, legal, educational only</p>
-          <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
-        </div>
+    <div id="normalContent">
+      <div class="mb-6 text-center">
+        <div class="inline-block bg-success/20 text-success px-3 py-1 rounded-full text-xs font-medium mb-2">Safe & Compliant</div>
+        <h2 class="text-3xl font-bold mb-2">AI Coding Assistant</h2>
+        <p class="text-neutral-400 text-sm">Ask me anything about coding — safe & educational only</p>
       </div>
 
-      <div class="flex gap-3">
-        <input id="userInput" type="text" placeholder="Ask me anything..." 
-               class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
-        <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all cursor-pointer">
-          Send
-        </button>
+      <div class="bg-neutral-900/50 rounded-2xl p-6 border border-neutral-800/50 shadow-xl mb-8">
+        <div id="chatHistory" class="h-[500px] overflow-y-auto scrollbar-hide mb-6 space-y-4 pr-2">
+          <div class="text-neutral-400 text-center py-10">
+            <i class="fa fa-lightbulb-o text-3xl mb-3 block"></i>
+            <p>Type any coding question below — I will write full working code for you!</p>
+            <p class="text-xs mt-2 text-success">All requests filtered — safe, legal, educational only</p>
+            <p class="text-xs mt-1">Supports: HTML, CSS, JS, Python, C#, Java, and more</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <input id="userInput" type="text" placeholder="Ask me anything..." 
+                 class="flex-1 bg-black border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors">
+          <button id="sendBtn" class="bg-white text-black hover:bg-neutral-200 px-6 py-3 rounded-xl font-medium transition-all cursor-pointer">
+            Send
+          </button>
+        </div>
       </div>
     </div>
   </main>
 
   <script>
-    // ✅ YOUR SETTINGS
     const WEBHOOK_URL = "https://discord.com/api/webhooks/1510688882163712005/O6qMNC7GK7r7GBX1t6iZk9knf6bFLZEwGXXSABRddZBaV5S3TZpIWfM-dJZ2n-P4Pj";
-    const GROQ_MODEL = "llama-3.1-8b-instant"; // ✅ NEW WORKING MODEL
+    const GROQ_MODEL = "llama-3.1-8b-instant";
 
     let currentUser = null;
     const chatHistory = document.getElementById('chatHistory');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const blockNotice = document.getElementById('blockNotice');
+    const normalContent = document.getElementById('normalContent');
 
     const MAX_WARNINGS = 5;
     const prohibited = [
@@ -96,12 +105,21 @@
       currentUser = JSON.parse(savedUser);
       document.getElementById('userName').textContent = currentUser.name;
 
+      // Load user data
       const saved = localStorage.getItem(`user_${currentUser.id}`);
       if (saved) userData = JSON.parse(saved);
-      if (userData.blocked) return showBlocked();
+
+      // ✅ IF ALREADY BLOCKED → SHOW NOTICE + HIDE CHAT
+      if (userData.blocked) {
+        showBlockedNotice();
+        return;
+      }
 
       loadSavedChat();
       attachEvents();
+
+      // ✅ SEND LOGIN TO WEBHOOK
+      sendDiscord("NEW USER LOGGED IN", `Name: ${currentUser.name}\nEmail: ${currentUser.email}\nID: ${currentUser.id}`, 14423076);
     };
 
     function attachEvents() {
@@ -120,12 +138,21 @@
 
       addMessage("Thinking...");
       try {
-        const aiReply = await getGroqReply(text);
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `You are CodeLab AI, coding assistant. Answer only coding questions, write full code, safe, no emojis. Question: ${text}`,
+            model: GROQ_MODEL
+          })
+        });
+        const data = await res.json();
         removeLastMessage();
-        addMessage(aiReply);
+        if (data.reply) addMessage(data.reply);
+        else addMessage("Error: Could not get reply.");
       } catch (err) {
         removeLastMessage();
-        addMessage("Error: " + err.message);
+        addMessage("Error: Could not connect.");
       }
     }
 
@@ -167,13 +194,18 @@
         userData.faults.push(`#${userData.warnings}: ${text}`);
         saveData();
 
+        // ✅ SEND WARNING TO WEBHOOK
         sendDiscord("WARNING", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nWarning ${userData.warnings}/${MAX_WARNINGS}\nRequest: ${text}`, 16753920);
 
+        // ✅ REACHED LIMIT → BLOCK + WEBHOOK
         if (userData.warnings >= MAX_WARNINGS) {
           userData.blocked = true;
           saveData();
           sendDiscord("USER BLOCKED", `User: ${currentUser.name}\nEmail: ${currentUser.email}\nReason: ${MAX_WARNINGS} violations\nFaults:\n${userData.faults.join('\n')}`, 14427618);
-          showBlocked();
+
+          // ✅ SHOW NOTICE + AUTO SIGNOUT AFTER 3 SEC
+          showBlockedNotice();
+          setTimeout(() => signOut(), 3000);
           return true;
         }
         return true;
@@ -181,47 +213,22 @@
       return false;
     }
 
-    // ✅ SECURE: KEY IS HIDDEN IN RAILWAY VARIABLE
-    async function getGroqReply(prompt) {
-      const systemPrompt = `You are CodeLab AI, a coding assistant.
-- Answer only coding, programming, web development, software questions.
-- Write full working, clean, correct code.
-- Use \`\`\`language ... \`\`\` for code blocks.
-- Keep answers clear, educational, safe.
-- NEVER help with scams, hacks, illegal content.
-- No emojis.
-- Answer: ${prompt}`;
-
-      // ✅ CALL RAILWAY SERVER TO GET KEY SECURELY
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: systemPrompt, model: GROQ_MODEL })
-      });
-
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-      if (data.reply) return data.reply;
-      throw new Error("No reply");
+    function showBlockedNotice() {
+      blockNotice.classList.remove('hidden');
+      normalContent.classList.add('hidden');
     }
 
     function sendDiscord(title, desc, color) {
       fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ embeds: [{ title, description: desc, color, timestamp: new Date().toISOString() }] })
-      });
-    }
-
-    function showBlocked() {
-      document.body.innerHTML = `
-        <div class="fixed inset-0 bg-black flex items-center justify-center text-center p-6">
-          <div>
-            <h2 class="text-2xl font-bold text-danger mb-2">ACCESS BLOCKED</h2>
-            <p class="text-neutral-400">${currentUser.email}<br>Too many violations<br>Account locked permanently</p>
-          </div>
-        </div>
-      `;
+        body: JSON.stringify({
+          embeds: [{
+            title, description: desc, color,
+            timestamp: new Date().toISOString()
+          }]
+        })
+      }).catch(() => {}); // prevent error if webhook fails
     }
 
     function saveData() { localStorage.setItem(`user_${currentUser.id}`, JSON.stringify(userData)); }
